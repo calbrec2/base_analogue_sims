@@ -256,25 +256,36 @@ def data_file_grabber(date_folder, scan_folder,sample_name, load_tau_domain =0):
     
     
     # scan_params = scan_folder[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA_FFT')]
-    scan_params = scan_folder[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA')]
+    if FPGA_mode == 1:
+        scan_params = scan_folder[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA')]
+    else:
+        scan_params = scan_folder[len('20230101-120000-'):]
+
     stages = scan_params[len(scan_params)-2:]
     scan_type = scan_params[:len(scan_params)-3]
     
     # Update 20231116
     if stages == 'xz':
         FT2D_mode = 0
+    else:
+        FT2D_mode = 1 # forcing FT2D for now... 20231215 CSA fix this eventually
     # files_mat = glob.glob('*.mat')
+
     if FT2D_mode == 1:
         file_FFT = glob.glob('*'+scan_type+'*'+stages+'*FFT2.mat')[0]
     else: 
         file_FFT = glob.glob('*'+scan_type+'*'+stages+'*FFT.mat')[0]
     file_RF_raw = glob.glob('*'+scan_type+'*'+stages+'*RF_raw*.mat')[0]
-    if len(glob.glob('*'+scan_type+'*'+stages+'*RF_rt*.mat')) == 0:
-        print('cant find retimed data, loading raw twice for now... fix later') # 20231215 CSA - need to fix
-        file_RF_rt = file_RF_raw
-    else:
-        file_RF_rt = glob.glob('*'+scan_type+'*'+stages+'*RF_rt*.mat')[0]
 
+
+    if FPGA_mode == 0:
+        file_RF_rt = glob.glob('*'+scan_type+'*'+stages+'*RF.mat')[0]
+    else:
+        if len(glob.glob('*'+scan_type+'*'+stages+'*RF_rt*.mat')) == 0:
+            print('cant find retimed data, loading raw twice for now... fix later') # 20231215 CSA - need to fix
+            file_RF_rt = file_RF_raw
+        else:
+            file_RF_rt = glob.glob('*'+scan_type+'*'+stages+'*RF_rt*.mat')[0]
 
     import scipy.io
     
@@ -405,10 +416,10 @@ def data_file_grabber(date_folder, scan_folder,sample_name, load_tau_domain =0):
 
 #%
 global xaxis, yaxis, DQC_exp, NRP_exp, RP_exp , NRP_tau_exp, RP_tau_exp, DQC_tau_exp, t43ax, t21ax, dmatW, smatW
-global timing_mode, FPGA_mode, sample_name
+global timing_mode, FPGA_mode, sample_name, FT2D_mode
 
 
-
+FT2D_mode=1
 
 # =============================================================================
 # # sample_name = 'MNS_4um' # all samples before ~20231030
@@ -449,8 +460,8 @@ scan_folder_dqc = '20221202-142926_DQC_xz'
 
 
 
-FPGA_mode = 1
-sample_name = 'MNS_4uM'
+# FPGA_mode = 1
+# sample_name = 'MNS_4uM'
 # date_folder = '20230728' # all six data sets
 # scan_folder_nrprp = '20230728-115041-NRP_RP_xz_2DFPGA'
 # scan_folder_dqc = '20230728-130413-DQC_xz_2DFPGA'
@@ -468,9 +479,9 @@ sample_name = 'MNS_4uM'
 # saved results w/ alpha fix in: 20231101_083207_optimized_params
 # =============================================================================
 
-date_folder = '20230801' # two good data sets
-scan_folder_nrprp = '20230801-115033-NRP_RP_xz_2DFPGA'
-scan_folder_dqc = '20230801-130235-DQC_xz_2DFPGA'
+# date_folder = '20230801' # two good data sets
+# scan_folder_nrprp = '20230801-115033-NRP_RP_xz_2DFPGA'
+# scan_folder_dqc = '20230801-130235-DQC_xz_2DFPGA'
 # # scan_folder_nrprp = '20230801-144625-NRP_RP_yz_2DFPGA'
 # # scan_folder_dqc = '20230801-160023-DQC_yz_2DFPGA'
 # =============================================================================
