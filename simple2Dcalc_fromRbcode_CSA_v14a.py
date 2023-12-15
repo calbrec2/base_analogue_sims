@@ -216,10 +216,18 @@ def plot2Dspectra(ax1, ax2, data, n_cont,ax_lim, title = '', domain = 'time',sav
 
 
 #%%
+
+
+import os.path
+from pathlib import Path
+
+home = str(Path.home())
+# print(os.path.join(home, "CodeProjects","WebSafer"))
+
 # grabs data to be optimized to
 # 20231215: going to change file paths to take files from github folder
 # create a computer mode function to be able to take files regardless of what machine this is run on?
-def data_file_grabber(date_folder, scan_folder, load_tau_domain =0):
+def data_file_grabber(date_folder, scan_folder,sample_name, load_tau_domain =0):
     # file_path = '/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI nucleoside/2D scan/20221202/20221202-135005_NRP_RP_xz'
     # file_path = os.path.join('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/2D scan/',date_folder,scan_folder)
     # file_path = os.path.join('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/2D scan/',date_folder,scan_folder)
@@ -231,39 +239,43 @@ def data_file_grabber(date_folder, scan_folder, load_tau_domain =0):
     # else:
     #     file_path = os.path.join('/Users/calbrec2/Dropbox/Claire_Dropbox/Data/6MI MNS/2D scan/',date_folder,scan_folder)
         
-    if FPGA_mode == 1:
-        # file_path = os.path.join(os.path.join('/Users/calbrec2/Dropbox/Claire_Dropbox/Data_FPGA/', sample_name), '/2D_scans/') ,date_folder,scan_folder)
-        file_path = '/Users/calbrec2/Dropbox/Claire_Dropbox/Data_FPGA/'+ sample_name+ '/2D_scans/' + date_folder #+ '/' + scan_folder
-    else:
-        file_path = os.path.join('/Users/calbrec2/Dropbox/Claire_Dropbox/Data/6MI MNS/2D scan/',date_folder,scan_folder)
+    # if FPGA_mode == 1:
+    #     # file_path = os.path.join(os.path.join('/Users/calbrec2/Dropbox/Claire_Dropbox/Data_FPGA/', sample_name), '/2D_scans/') ,date_folder,scan_folder)
+    #     file_path = '/Users/calbrec2/Dropbox/Claire_Dropbox/Data_FPGA/'+ sample_name+ '/2D_scans/' + date_folder #+ '/' + scan_folder
+    # else:
+    #     file_path = os.path.join('/Users/calbrec2/Dropbox/Claire_Dropbox/Data/6MI MNS/2D scan/',date_folder,scan_folder)
             
+    home = str(Path.home())
+    if len(glob.glob(home+'*')) > 0:
+        if FPGA_mode == 1:
+            file_path = os.path.join(home,'Documents','github_base','Data','2PE2DFS','Data_FPGA',sample_name,'2D_scans', date_folder, scan_folder)
+        else:
+            file_path = os.path.join(home, 'Documents','github_base','Data','2PE2DFS','Data_lock_in',sample_name,'2D scan',date_folder, scan_folder)
+    
     os.chdir(file_path)
     
     
-    scan_params = scan_folder[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA_FFT')]
+    # scan_params = scan_folder[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA_FFT')]
+    scan_params = scan_folder[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA')]
     stages = scan_params[len(scan_params)-2:]
     scan_type = scan_params[:len(scan_params)-3]
     
     # Update 20231116
-    
+    if stages == 'xz':
+        FT2D_mode = 0
     # files_mat = glob.glob('*.mat')
     if FT2D_mode == 1:
         file_FFT = glob.glob('*'+scan_type+'*'+stages+'*FFT2.mat')[0]
     else: 
         file_FFT = glob.glob('*'+scan_type+'*'+stages+'*FFT.mat')[0]
     file_RF_raw = glob.glob('*'+scan_type+'*'+stages+'*RF_raw*.mat')[0]
-    file_RF_rt = glob.glob('*'+scan_type+'*'+stages+'*RF_rt*.mat')[0]
+    if len(glob.glob('*'+scan_type+'*'+stages+'*RF_rt*.mat')) == 0:
+        print('cant find retimed data, loading raw twice for now... fix later') # 20231215 CSA - need to fix
+        file_RF_rt = file_RF_raw
+    else:
+        file_RF_rt = glob.glob('*'+scan_type+'*'+stages+'*RF_rt*.mat')[0]
 
-    # files = np.array(os.listdir(file_path))
-    # mat_file_loc = []
-    # for i in range(len(files)):
-    #     temp = files[i][len(files[i]) - 4:len(files[i])] == '.mat'
-    #     mat_file_loc.append(bool(temp))
-        
-    # file = files[np.array(mat_file_loc)]
-    
 
-    
     import scipy.io
     
     # =============================================================================
@@ -275,21 +287,11 @@ def data_file_grabber(date_folder, scan_folder, load_tau_domain =0):
     mat = scipy.io.loadmat(file)
     # mat = scipy.io.loadmat(file[np.char.find(file,'_RF.mat')>0][0]) # used prior to 20231116
     
-    
     # load the time domain data
     SHGcenter = mat['SHGcenter'][0][0]
     Tsn = mat['Tsn'][0][0]
     dqc_mode = mat['dqc_mode'][0][0]
-    
-    # dmatIntPx2 = mat['dmatIntPx2']
-    # smatIntPx2 = mat['smatIntPx2']
-    # t21ax_rt = mat['t21ax_rt'][0]
-    # t43ax_rt = mat['t43ax_rt'][0]
-    
-    # dmatIntPx2 = mat['dmat']
-    # smatIntPx2 = mat['smat']
-    # t21ax_rt = mat['t21ax'][0]
-    # t43ax_rt = mat['t43ax'][0]
+
     
     if FPGA_mode == 0:
         dmatIntPx2 = mat['dmatIntPx2']
@@ -297,10 +299,18 @@ def data_file_grabber(date_folder, scan_folder, load_tau_domain =0):
         t21ax_rt = mat['t21ax_rt'][0]
         t43ax_rt = mat['t43ax_rt'][0]
     else:
-        dmatIntPx2 = mat['dmat']
-        smatIntPx2 = mat['smat']
-        t21ax_rt = mat['t21ax'][0]
-        t43ax_rt = mat['t43ax'][0]
+        if len(glob.glob('*'+scan_type+'*'+stages+'*RF_rt*.mat')) == 0:
+            dmatIntPx2 = mat['RPmat']               # 20231215 CSA - need to fix with comment above
+            smatIntPx2 = mat['NRPmat']
+            t21ax_rt = mat['tb1'].flatten() #[0]
+            if t21ax_rt[2] < 0:
+                t21ax_rt = - t21ax_rt
+            t43ax_rt = mat['raw_ax2'].flatten() #[0]
+        else:
+            dmatIntPx2 = mat['dmat']
+            smatIntPx2 = mat['smat']
+            t21ax_rt = mat['t21ax'][0]
+            t43ax_rt = mat['t43ax'][0]
     
     
     
@@ -326,12 +336,6 @@ def data_file_grabber(date_folder, scan_folder, load_tau_domain =0):
     file = file_RF_raw
     mat = scipy.io.loadmat(file)
     
-    # Ts = mat['Ts'][0][0]
-    # dmatW = mat['dmatW']
-    # smatW = mat['smatW']
-    # t21ax = mat['t21ax'].flatten() #[0]
-    # t43ax = mat['t43ax'].flatten() #[0]
-    
     if FPGA_mode == 0:
         Ts = mat['Ts'][0][0]
         dmatW = mat['dmatW']
@@ -346,12 +350,6 @@ def data_file_grabber(date_folder, scan_folder, load_tau_domain =0):
             t21ax = - t21ax
         t43ax = mat['raw_ax2'].flatten() #[0]
     
-    # dmatW = mat['RPmat']
-    # smatW = mat['NRPmat']
-    # t21ax = mat['tb1'].flatten() #[0]
-    # if t21ax[2] < 0:
-    #     t21ax = - t21ax
-    # t43ax = mat['raw_ax2'].flatten() #[0]
     
     dqc_mode = mat['dqc_mode'][0][0]
     
@@ -372,8 +370,6 @@ def data_file_grabber(date_folder, scan_folder, load_tau_domain =0):
     # Load spectral domain
     # =============================================================================
 
-    # mat = scipy.io.loadmat(file[2])
-    # mat = scipy.io.loadmat(file[np.char.find(file,'FFT.mat')>0][0]) # used prior to 20231116
     file = file_FFT
     mat = scipy.io.loadmat(file)
     
@@ -381,10 +377,6 @@ def data_file_grabber(date_folder, scan_folder, load_tau_domain =0):
     SHGcenter = mat['SHGcenter'][0][0]
     xaxis = mat['xaxis'][0]
     yaxis = mat['yaxis'][0]
-    # sumFunc_RT = mat['sumFunc_RT']
-    # difFunc_RT = mat['difFunc_RT']
-    # sumFunc_RT = mat['sumFunc']
-    # difFunc_RT = mat['diffFunc']
     if FPGA_mode == 0:
         sumFunc_RT = mat['sumFunc_RT']
         difFunc_RT = mat['difFunc_RT']
@@ -422,10 +414,12 @@ global timing_mode, FPGA_mode, sample_name
 # # sample_name = 'MNS_4um' # all samples before ~20231030
 # =============================================================================
 
-# FPGA_mode = 0
-# date_folder = '20221202'
-# scan_folder_nrprp = '20221202-135005_NRP_RP_xz' # first set of data optimized 
-# scan_folder_dqc = '20221202-142926_DQC_xz'
+FPGA_mode = 0
+sample_name = 'MNS_4uM'
+
+date_folder = '20221202'
+scan_folder_nrprp = '20221202-135005_NRP_RP_xz' # first set of data optimized 
+scan_folder_dqc = '20221202-142926_DQC_xz'
 # parameters saved here: '2023-07-21_optimized_params.npy'
 
 # date_folder = '20230208'
@@ -456,6 +450,7 @@ global timing_mode, FPGA_mode, sample_name
 
 
 FPGA_mode = 1
+sample_name = 'MNS_4uM'
 # date_folder = '20230728' # all six data sets
 # scan_folder_nrprp = '20230728-115041-NRP_RP_xz_2DFPGA'
 # scan_folder_dqc = '20230728-130413-DQC_xz_2DFPGA'
@@ -473,9 +468,9 @@ FPGA_mode = 1
 # saved results w/ alpha fix in: 20231101_083207_optimized_params
 # =============================================================================
 
-# date_folder = '20230801' # two good data sets
-# scan_folder_nrprp = '20230801-115033-NRP_RP_xz_2DFPGA'
-# scan_folder_dqc = '20230801-130235-DQC_xz_2DFPGA'
+date_folder = '20230801' # two good data sets
+scan_folder_nrprp = '20230801-115033-NRP_RP_xz_2DFPGA'
+scan_folder_dqc = '20230801-130235-DQC_xz_2DFPGA'
 # # scan_folder_nrprp = '20230801-144625-NRP_RP_yz_2DFPGA'
 # # scan_folder_dqc = '20230801-160023-DQC_yz_2DFPGA'
 # =============================================================================
@@ -496,14 +491,14 @@ FPGA_mode = 1
 # =============================================================================
 # Let's look at MNT data
 # =============================================================================
-sample_name = 'MNT_5perc'
-date_folder = '20231030'
+# sample_name = 'MNT_5perc'
+# date_folder = '20231030'
 # scan_folder_nrprp = '20231030-111439-NRP_RP_xz_2DFPGA_FFT'
 # scan_folder_dqc = '220231030-121729-DQC_xz_2DFPGA_FFT'
 # scan_folder_nrprp = '20231030-132010-NRP_RP_yz_2DFPGA_FFT'
 # scan_folder_dqc = '20231030-141546-DQC_yz_2DFPGA_FFT'
-scan_folder_nrprp = '20231030-151811-NRP_RP_xy_2DFPGA_FFT'
-scan_folder_dqc = '20231030-161416-DQC_xy_2DFPGA_FFT'
+# scan_folder_nrprp = '20231030-151811-NRP_RP_xy_2DFPGA_FFT'
+# scan_folder_dqc = '20231030-161416-DQC_xy_2DFPGA_FFT'
 
 # =============================================================================
 # Let's look at oreg0112 monomer ssDNA data
@@ -518,18 +513,18 @@ scan_params = scan_folder[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA_
 stages = scan_params[len(scan_params)-2:]
 scan_type = scan_params[:len(scan_params)-3]
 # =============================================================================
-# timing_mode ='t32 = 0'
+timing_mode ='t32 = 0'
 # timing_mode ='t21 = 0'
-timing_mode ='t43 = 0'
+# timing_mode ='t43 = 0'
 FT2D_mode = 1
 # =============================================================================
 
-xaxis, yaxis, sumFunc_RT, difFunc_RT, xbounds, dqc_mode, t21ax_rt, t43ax_rt, smatIntPx2, dmatIntPx2, Tsn, t43ax, t21ax, dmatW, smatW = data_file_grabber(date_folder, scan_folder_nrprp,load_tau_domain=1)
+xaxis, yaxis, sumFunc_RT, difFunc_RT, xbounds, dqc_mode, t21ax_rt, t43ax_rt, smatIntPx2, dmatIntPx2, Tsn, t43ax, t21ax, dmatW, smatW = data_file_grabber(date_folder, scan_folder_nrprp,sample_name,load_tau_domain=1)
 NRP_tau_raw_exp, RP_tau_raw_exp = smatW, dmatW
 NRP_tau_exp, RP_tau_exp = smatIntPx2, dmatIntPx2
 NRP_exp, RP_exp = sumFunc_RT, difFunc_RT
 
-xaxis, yaxis, sumFunc_RT, difFunc_RT, xbounds, dqc_mode, t21ax_rt, t43ax_rt, smatIntPx2, dmatIntPx2, Tsn, t43ax, t21ax, dmatW, smatW = data_file_grabber(date_folder, scan_folder_dqc,load_tau_domain=1)
+xaxis, yaxis, sumFunc_RT, difFunc_RT, xbounds, dqc_mode, t21ax_rt, t43ax_rt, smatIntPx2, dmatIntPx2, Tsn, t43ax, t21ax, dmatW, smatW = data_file_grabber(date_folder, scan_folder_dqc,sample_name,load_tau_domain=1)
 DQC_tau_raw_exp = smatW
 DQC_tau_exp = sumFunc_RT
 DQC_exp = sumFunc_RT
