@@ -355,31 +355,31 @@ def TargetAbsCDSpectra(phiN_thetaN_rollN_shiftN_shearN_R12ang_sigma_chiAbs_chiCD
     # =============================================================================
     # look at eigenvalues within an nxn matrix    
     # =============================================================================
-    diag_ham = np.zeros(ham.shape)    
-    diag_ham = np.fill_diagonal(diag_ham,np.array(eps))
-    # Just hamiltonian for monomer A
-    h1 = epsilon0*kr4(cDc, Iel, Ivib, Ivib)  # H_A: term 1 (electronic excitation)
-    h4 = omega0*kr4(Iel, Iel, bDb, Ivib) # H_A: term 2  (vibrational excitation)
-    h6 = omega0*kr4(cDc, Iel, lam * (bD + b) + (lam**2) * Ivib, Ivib) # electronic - vibrational coupling
-    ham_A = h1 + h4 + h6
-    eps_A,vecs_A = la.eig(ham_A)
-    idx_A = eps_A.argsort()[::-1]   
-    eps_A = eps_A[idx_A]
-    vecs_A = vecs_A[:,idx_A]
-    #print(vecs)           # debugging
-    eps_A = np.flip(eps_A, 0)
-    vecs_A = np.fliplr(vecs_A)
+    # diag_ham = np.zeros(ham.shape)    
+    # diag_ham = np.fill_diagonal(diag_ham,np.array(eps))
+    # # Just hamiltonian for monomer A
+    # h1 = epsilon0*kr4(cDc, Iel, Ivib, Ivib)  # H_A: term 1 (electronic excitation)
+    # h4 = omega0*kr4(Iel, Iel, bDb, Ivib) # H_A: term 2  (vibrational excitation)
+    # h6 = omega0*kr4(cDc, Iel, lam * (bD + b) + (lam**2) * Ivib, Ivib) # electronic - vibrational coupling
+    # ham_A = h1 + h4 + h6
+    # eps_A,vecs_A = la.eig(ham_A)
+    # idx_A = eps_A.argsort()[::-1]   
+    # eps_A = eps_A[idx_A]
+    # vecs_A = vecs_A[:,idx_A]
+    # #print(vecs)           # debugging
+    # eps_A = np.flip(eps_A, 0)
+    # vecs_A = np.fliplr(vecs_A)
     
-    # %%
-    omega_ge = 14000
-    omega0 = 400
-    omega_ge=omega0
-    h1A = omega_ge * kr(cDc, Ivib)
-    h4A = omega0 * kr(Iel, bDb) 
-    h6A = omega0 * kr(cDc, lam * (bD + b) + (lam**2)*Ivib)
-    h8A = omega_ge * kr((cD + c), Ivib)
-    hamA = h1A + h4A + h6A + h8A
-    plt.matshow(hamA)
+    # # %%
+    # omega_ge = 14000
+    # omega0 = 400
+    # omega_ge=omega0
+    # h1A = omega_ge * kr(cDc, Ivib)
+    # h4A = omega0 * kr(Iel, bDb) 
+    # h6A = omega0 * kr(cDc, lam * (bD + b) + (lam**2)*Ivib)
+    # h8A = omega_ge * kr((cD + c), Ivib)
+    # hamA = h1A + h4A + h6A + h8A
+    # plt.matshow(hamA)
     # how to build in selection rules?
     
     #%%
@@ -534,9 +534,18 @@ def get_c_spectra():
     
     # os.chdir('/Users/clairealbrecht/Dropbox/MATLAB_programs/claire_programs/from_Lulu/20230726')
     # os.chdir('/Users/calbrecht/Dropbox/MATLAB_programs/claire_programs/from_Lulu/20230726')
-    os.chdir(terminalID+'Dropbox/MATLAB_programs/claire_programs/from_Lulu/20230726')
+    # os.chdir(terminalID+'Dropbox/MATLAB_programs/claire_programs/from_Lulu/20230726')
     # file_name = 'DNTDP_10perc_20230306_finescan_10nm_min.txt'
     # file_name = '20230726_MNS_4uM_20230726_finescan.txt'
+    
+    import os.path
+    from pathlib import Path
+
+    home = str(Path.home())
+    path = os.path.join(home,'Documents','github_base','Data','CD_Abs','20230726')
+    os.chdir(path)
+    
+    
     buf_file_name = '20230726_buffer2.txt'
     buf_data = np.loadtxt(buf_file_name, skiprows=21)
 
