@@ -31,7 +31,7 @@ import glob
 #%%
 import matplotlib as mpl
 
-
+# Makes it so the color bar of the 2D spec always is centered about zero (green)
 class MidpointNormalize(mpl.colors.Normalize):
     def __init__(self, vmin, vmax, midpoint=0, clip=False):
         self.midpoint = midpoint
@@ -63,6 +63,7 @@ class MidpointNormalize(mpl.colors.Normalize):
 # plt.show()
 
 #%%
+# plotting function that creates aspect ratio 1 plots with the correct axes and labels, etc.
 def plot2Dspectra(ax1, ax2, data, n_cont,ax_lim, title = '', domain = 'time',save_mode = 0,file_name=' ',scan_folder = ' '):
     #%
     axes_fontsize = 14
@@ -215,6 +216,9 @@ def plot2Dspectra(ax1, ax2, data, n_cont,ax_lim, title = '', domain = 'time',sav
 
 
 #%%
+# grabs data to be optimized to
+# 20231215: going to change file paths to take files from github folder
+# create a computer mode function to be able to take files regardless of what machine this is run on?
 def data_file_grabber(date_folder, scan_folder, load_tau_domain =0):
     # file_path = '/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI nucleoside/2D scan/20221202/20221202-135005_NRP_RP_xz'
     # file_path = os.path.join('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/2D scan/',date_folder,scan_folder)
@@ -509,6 +513,7 @@ scan_folder_dqc = '20231030-161416-DQC_xy_2DFPGA_FFT'
 # =============================================================================
 # 
 # =============================================================================
+scan_folder = scan_folder_nrprp
 scan_params = scan_folder[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA_FFT')]
 stages = scan_params[len(scan_params)-2:]
 scan_type = scan_params[:len(scan_params)-3]
@@ -567,7 +572,7 @@ def FFT_2d(data, t21ax_rt, time_ax, monoC_lam, scan_type): # do the zeropadding 
     ax1 = (Faxis + Fmono) * 1e-3 
     ax2 = ax1
     
-    if FT2D_mode == 1:
+    if FT2D_mode == 1: # always take 2D transform
         if timing_mode == 't21 = 0':
             if scan_type == 'NRP_RP':
                 Fmono = 0
@@ -575,7 +580,7 @@ def FFT_2d(data, t21ax_rt, time_ax, monoC_lam, scan_type): # do the zeropadding 
             else: # => scan_type = 'DQC'
                 Fmono = 2 * (10**7/monoC_lam)
                 ax1 = (Faxis + Fmono) * 1e-3
-        else: # => timing_mode = 't43 = 0'
+        else: # => timing_mode = 't43 = 0'  # only take 2D transform when t32=0
             if scan_type == 'NRP_RP':
                 Fmono = 0
                 ax2 = (Faxis + Fmono) * 1e-3
@@ -626,31 +631,28 @@ def FFT_1d(data, t21ax_rt, time_ax,monoC_lam): # do the zeropadding more explici
     return dataFT, ax1, ax2
     
 
-def delayedGaussian(x,c,s):
+
+def delayedGaussian(x,c,s): # used for windowing the 2D sim plots to make sure they go to zero at edges (avoid ringing in freq domain)
     w = np.ones(np.shape(x));
     shifted = x-c;
     index = shifted > 0;
     w[index] = np.exp(-4.5*(shifted[index]**2)/(s**2));
     return w    
-def gaussian2d(x, x0, sig):
-    w = np.ones(np.shape(x))
-    w = np.exp(-1*(x - x0)**2/(2*sig**2))
-    # mask = w > 1
-    # w[mask] = 1
-    return w   
+
+# def gaussian2d(x, x0, sig):
+#     w = np.ones(np.shape(x))
+#     w = np.exp(-1*(x - x0)**2/(2*sig**2))
+#     # mask = w > 1
+#     # w[mask] = 1
+#     return w   
  
 #%%
 
-def overlap_params(xs, mu1, mu2, sig1, sig2):
+def overlap_params(xs, mu1, mu2, sig1, sig2): # caluclate new mu and sig after overlapping molecule absorption spectrum with laser spectrum
     mu_adj = (sig2**2 * mu1 + sig1**2 * mu2)/(sig1**2 + sig2**2)
     sig_adj = np.sqrt(1/((1/sig1**2) + (1/sig2**2)))
     return mu_adj, sig_adj
 
-# def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta):
-# def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam, theta12):
-# def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam, theta12, lam1, lam2):
-# def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam, theta12, omega_ge, omega_gep):
-# def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam, theta12, omega_ge, omega_gep):
 def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam, omega_ge, omega_gep):
     #%
     c0 = 0.000299792458 # mm / fs
@@ -694,6 +696,7 @@ def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam
     
     # =============================================================================
     # Write down the energies that correspond to the dipole moments
+    # 20231215: this is where we will plug in the eigenenergies from the hamiltonian approach
     # =============================================================================
     
     delta = (omega_gep - omega_ge)/2 # 20231018 update
@@ -724,6 +727,7 @@ def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam
     t21 = np.tile(t21, (len(t21),1))
     time_size = len(t21)
     
+    # set up the axes depending on which type of experiment we are doing (timing_mode)
     if timing_mode =='t32 = 0':
         t32 = 0 
         t43 = t21.T
@@ -756,20 +760,10 @@ def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam
     mu4 = np.array(mu4) 
    
 
-    # set the relative angle between |f1> and |f2> in the 6MI molecule (from Widom et al. NAR paper)
-    # cos_theta12 = np.cos(36.8 * (np.pi/180))
-    # let the relative angle vary...
-    # cos_theta12 = np.cos(theta12 * (np.pi/180))
-    # define array for spherical average over dipole overlap with linearly polarized electric field
-    # orient_avg_arr = np.array([1/5, 1/5, (1/9) * cos_theta12, (1/9) * cos_theta12, (1/9) * cos_theta12,(1/9) * cos_theta12,(1/5) * cos_theta12**2, (1/5) * cos_theta12**2]) 
+    # Assuming we are only probing one electronic dipole transition (EDTM) moment in the molecule (and its virtual and vibrational states)
     orient_avg_arr = np.ones(8) * (1/5) 
-    # orient_avg_arr = np.ones(orient_avg_arr.shape)
-    
-    # for i in range(nterms):
-    #     print('i = '+str(i)+' path = '+str(i+1) +' coef = '+str(orient_avg_arr[i] * mu1[i] * mu2[i] * mu3[i] * mu4[i]))
-    # plt.figure()
-    # plt.scatter(np.linspace(1,8,8), orient_avg_arr * mu1 * mu2 * mu3 * mu4)
-    
+    # 1/5 comes from the orientational average of the angle between the molecule EDTM   and the laser polarization (horizontal)
+   
     #%
     cm_DQC = np.zeros([time_size,time_size],dtype='complex')
     cm_NRP = np.zeros([time_size,time_size],dtype='complex')
@@ -781,6 +775,7 @@ def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam
     # for i in [0,1,2,5]:
         # print('i = ', i+1)
         
+        # omegaN[i] for N=1,2,3 is an individual term giving one freq peak, currently 8 terms... hamiltonian form will hopefully generalize this
         omega1 = [omega_ge, omega_gep,   omega_gep,  omega_ge,   omega_gep,   omega_ge,     omega_ge,   omega_gep]
         omega2 = [omega_gf, omega_gfp,   omega_gf,   omega_gf,   omega_gfp,   omega_gfp,    omega_gfp,  omega_gf]        
         omega3 = [omega_ef, omega_epfp,  omega_ef,   omega_epf,  omega_efp,   omega_epfp,   omega_efp,  omega_epf]
@@ -789,94 +784,58 @@ def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam
         # print('mu1: '+str(mu1[i])+' mu2: '+str(mu2[i])+' mu3: '+str(mu3[i])+' mu4: '+str(mu4[i]))
         # print('mu1*mu2*mu3*mu4: '+str(mu1[i] * mu2[i] * mu3[i] * mu4[i]))
         
-        # use inhomogenous linewidth to calculate shifts? (variable parameter)
+        # use inhomogenous linewidth as width of molecular absorption peak to calculate shifts (variable parameter)
         omega1 = (laser_omega * sigI**2 + np.array(omega1) * laser_sig_omega**2) / (sigI**2 + laser_sig_omega**2)
-        # omega2 = (laser_omega * sigI**2 + np.array(omega2) * laser_sig_omega**2) / (sigI**2 + laser_sig_omega**2)
         omega2 = ((2*laser_omega) * sigI**2 + np.array(omega2) * (laser_sig_omega/2)**2) / (sigI**2 + (laser_sig_omega/2)**2)
+        # need 2*laser omega for omega2 in the DQC calculation because omega2 is during t32 which has an |g><f| coherence = 2x energy of laser
         omega3 = (laser_omega * sigI**2 + np.array(omega3) * laser_sig_omega**2) / (sigI**2 + laser_sig_omega**2)
-        # omega1 = (laser_omega * Gam**2 + np.array(omega1) * laser_sig_omega**2) / (Gam**2 + laser_sig_omega**2)
-        # omega2 = (laser_omega * Gam**2 + np.array(omega2) * laser_sig_omega**2) / (Gam**2 + laser_sig_omega**2)
-        # omega3 = (laser_omega * Gam**2 + np.array(omega3) * laser_sig_omega**2) / (Gam**2 + laser_sig_omega**2)
-        # print(['!!! using Gam_H for the molecular linewidth instead of sigI!!!'])
-
-        # print('post laser overlap: omega1: '+str(omega1[i])+' omega3: '+str(omega3[i]))
 
 
-    
+        # alphas are: what is the amplitude of the overlap between molecule abs and laser at the newly shifted energies (directly above) 
         alpha1 = gauss(np.array(omega1), laser_omega, laser_sig_omega,1)
-        # alpha2 = gauss(np.array(omega2), laser_omega, laser_sig_omega,1)
+        # alpha2 = gauss(np.array(omega2), laser_omega, laser_sig_omega,1) # things are funky about omega2... sort this out
         alpha3 = gauss(np.array(omega3), laser_omega, laser_sig_omega,1)
         alpha1 = alpha1/np.max(alpha1)
-        # alpha2 = alpha2/np.max(alpha2)
+        # alpha2 = alpha2/np.max(alpha2) # things are funky about omega2... sort this out
         alpha3 = alpha3/np.max(alpha3)
         alpha = alpha1[i] * alpha3[i] #* alpha2[i]
-
-        # print('omega2 :'+str(omega2))
-
-
-        # subtract off monochromator reference frequency
-        # omega1 = np.abs(np.array(omega1) - monoC_omega)
-        # omega2 = np.abs(np.array(omega2) - 2 * monoC_omega) 
-        # omega3 = np.abs(np.array(omega3) - monoC_omega)
-        omega1 = (np.array(omega1) - monoC_omega)
-        omega2 = (np.array(omega2) - (2 * monoC_omega) )
-        omega3 = (np.array(omega3) - monoC_omega)
-        # print('post laser overlap: omega1: '+str(omega1[i])+' omega3: '+str(omega3[i]))
-
-        # print('omega1:'+str(omega1))
-        # print('omega1 + omega_monoC:' + str(omega1 + monoC_omega))   
-        # print('omega2 - 2*monoc:'+str(omega2))
+        # product of the alphas will scale this peak intensity
         
-        # if i ==2:# or i == 5:
-        #     orient_avg_arr[i] = orient_avg_arr[i] * 50
-        #     print('!!! artifically scaling peak 3 and 6 (idx 2 and 5) !!!')
-        # elif i==5:
-        #     orient_avg_arr[i] = orient_avg_arr[i] * 2
-        #     print('!!! artifically scaling peak 3 and 6 (idx 2 and 5) !!!')
-            
-        # print('omega3:'+str(omega3 ))
-        # print('omega3 + omega_monoC:' + str(omega3 + monoC_omega))
-        # omega3 =(14009-monoC_omega)*np.ones(omega3.shape)
+
+
+        # subtract off monochromator reference frequency (because we are downsampling as explained in Tekavec 2006 & 2007)
+        omega1 = (np.array(omega1) - monoC_omega)
+        omega2 = (np.array(omega2) - (2 * monoC_omega) ) # factor of 2 came out of calculations
+        omega3 = (np.array(omega3) - monoC_omega)
+
+        
         cm_DQC += alpha * orient_avg_arr[i] * mu1[i] * mu2[i] * mu3[i] * mu4[i] * np.exp(1j*nubar2omega*(omega3[i]*t43 + omega2[i]*t32 + omega1[i]*t21)) \
                                                             * np.exp(-Gam*nubar2omega*(t43 + t32 + t21)) * np.exp(-(1/2)*(sigI*nubar2omega)**2*(t21 + t32 + t43)**2)
-        # cm_DQC += np.conjugate(orient_avg_arr[i] * mu1[i] * mu2[i] * mu3[i] * mu4[i] * np.exp(1j*nubar2omega*(omega3[i]*t43 + omega2[i]*t32 + omega1[i]*t21)) \
-        #                                                     * np.exp(-Gam*nubar2omega*(t43 + t32 + t21)) * np.exp(-(1/2)*(sigI*nubar2omega)**2*(t21 + t32 + t43)**2)).T
-        # cm_DQC_temp = alpha * orient_avg_arr[i] * mu1[i] * mu2[i] * mu3[i] * mu4[i] * np.exp(1j*nubar2omega*(omega3[i]*t43 + omega2[i]*t32 + omega1[i]*t21)) \
-        #                                                     * np.exp(-Gam*nubar2omega*(t43 + t32 + t21)) * np.exp(-(1/2)*(sigI*nubar2omega)**2*(t21 + t32 + t43)**2)
-        # print('amp val ' +str(i)+': '+str(alpha * orient_avg_arr[i] * mu1[i] * mu2[i] * mu3[i] * mu4[i]))      
-        
+
         # set up omega2's for the RP and NRP (different from DQC)                                                    
         omega2 = [omega_ee, omega_epep,   omega_eep,   omega_eep,   omega_eep,   omega_eep, omega_ee, omega_epep] 
-        # omega2 = np.abs(omega2)
-        #apply freq shift from overlap with laser
+        
+        
+        #apply freq shift from overlap with laser -- how to do this properly for omega 2?
         # omega2 = (laser_omega * sigI**2 + np.array(omega2) * laser_sig_omega**2) / (sigI**2 + laser_sig_omega**2)
-        # omega2 = (laser_omega * Gam**2 + np.array(omega2) * laser_sig_omega**2) / (Gam**2 + laser_sig_omega**2)
-        # print(['!!! using Gam_H for the molecular linewidth instead of sigI!!!'])
 
         # alpha2 = gauss(np.array(omega2), laser_omega, laser_sig_omega,1)
         # alpha2 = alpha2/np.max(alpha2)
-        alpha = alpha1[i]  * alpha3[i] #* alpha2[i]
+        alpha = alpha1[i]  * alpha3[i] #* alpha2[i] # how do we take care of omega2 here?
 
         # subtract of monochromator freq
         # omega2 = np.abs(np.array(omega2) - monoC_omega)
         # omega2 = monoC_omega - np.array(omega2)
+        ##### omega2 doesn't get subtracted off for NRP & RP... comes out of calculations
         
         cm_NRP += alpha * orient_avg_arr[i] * mu1[i] * mu2[i] * mu3[i] * mu4[i] * np.exp(1j*nubar2omega*(omega3[i]*t43 + omega2[i]*t32 + omega1[i]*t21)) \
                                                             * np.exp(-Gam*nubar2omega*(t43 + t32 + t21)) * np.exp(-(1/2)*(sigI*nubar2omega)**2*(t21 + t32 + t43)**2)
-        # cm_NRP += np.conjugate(orient_avg_arr[i] * mu1[i] * mu2[i] * mu3[i] * mu4[i] * np.exp(1j*nubar2omega*(omega3[i]*t43 + omega2[i]*t32 + omega1[i]*t21)) \
-        #                                                     * np.exp(-Gam*nubar2omega*(t43 + t32 + t21)) * np.exp(-(1/2)*(sigI*nubar2omega)**2*(t21 + t32 + t43)**2)).T                                                   
-        
-        # cm_NRP_temp = orient_avg_arr[i] * mu1[i] * mu2[i] * mu3[i] * mu4[i] * np.exp(1j*nubar2omega*(omega3[i]*t43 + omega2[i]*t32 + omega1[i]*t21)) \
-        #                                                     * np.exp(-Gam*nubar2omega*(t43 + t32 + t21)) * np.exp(-(1/2)*(sigI*nubar2omega)**2*(t21 + t32 + t43)**2)
 
         
         cm_RP += alpha * orient_avg_arr[i] * mu1[i] * mu2[i] * mu3[i] * mu4[i] * np.exp(1j*nubar2omega*(omega3[i]*(-1*t43) + omega2[i]*t32 + omega1[i]*t21)) \
                                                             * np.exp(-Gam*nubar2omega*(t43 + t32 + t21)) * np.exp(-(1/2)*(sigI*nubar2omega)**2*(t21 + t32 + (-1*t43))**2)
-        # cm_RP+= np.conjugate(orient_avg_arr[i] * mu1[i] * mu2[i] * mu3[i] * mu4[i] * np.exp(1j*nubar2omega*(omega3[i]*(-1*t43) + omega2[i]*t32 + omega1[i]*t21)) \
-        #                                                     * np.exp(-Gam*nubar2omega*(t43 + t32 + t21)) * np.exp(-(1/2)*(sigI*nubar2omega)**2*(t21 + t32 + (-1*t43))**2)).T
-        # cm_RP_temp = orient_avg_arr[i] * mu1[i] * mu2[i] * mu3[i] * mu4[i] * np.exp(1j*nubar2omega*(omega3[i]*(-1*t43) + omega2[i]*t32 + omega1[i]*t21)) \
-        #                                                     * np.exp(-Gam*nubar2omega*(t43 + t32 + t21)) * np.exp(-(1/2)*(sigI*nubar2omega)**2*(t21 + t32 + (-1*t43))**2)
-        
+
+        ### this commented block is for testing
         # if timing_mode == 't32 = 0':
         #     time_ax = t21
         #     FT_dqc_temp, ax1, ax2 = FFT_2d(cm_DQC_temp, t21ax_rt, time_ax, monoC_lam)
@@ -890,6 +849,7 @@ def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam
         #     # plot2Dspectra(ax1, ax2, FT_rp_temp, n_cont, ax_lim=ax_lim, title=r'RP($\omega$) with '+timing_mode_str,domain='freq')#'($\tau_{32}$ = 0)',domain = 'freq')
         #     # plt.show()
         
+    # set up the times to send out based on experiment being simulated
     if timing_mode =='t32 = 0':
         # t21 = array of times, t32 = 0, t43 = array of times
         t1_out = t21
@@ -903,26 +863,27 @@ def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam
         t1_out = t32
         t2_out = t43
     
+    
+    # test response functions by plotting
     # n_cont = 15
     # ax_lim = [np.min(t1_out), np.max(t1_out)]
     # plot2Dspectra(t1_out, t2_out, cm_DQC, n_cont,ax_lim=ax_lim, title=r'DQC($\tau$) with '+timing_mode_str,domain='time')#'($\tau_{32}$ = 0)',domain = 'time')
     # plot2Dspectra(t1_out, t2_out, cm_NRP, n_cont,ax_lim=ax_lim, title=r'NRP($\tau$) with '+timing_mode_str,domain='time')#'($\tau_{32}$ = 0)',domain = 'time')
     # plot2Dspectra(t1_out, t2_out, cm_RP, n_cont,ax_lim=ax_lim, title=r'RP($\tau$) with '+timing_mode_str,domain='time')#'($\tau_{32}$ = 0)',domain = 'time')
-    #%
-    #%
     # colormap = 'jet'
     
-      #%
+    # create a window to apply to time domain before taking FFT (adjust window time and steepness depending on delay space in experiment)
     xx = t21
     yy = t43
     # w = delayedGaussian(np.sqrt(xx**2 + yy**2),80, 10); #70e-15,10e-15); 
     w = delayedGaussian(np.sqrt(xx**2 + yy**2),100, 10); #70e-15,10e-15); 
-    # plt.contourf(xx, yy, w, cmap=colormap)
+    #                                         onset, steepness
+    # plt.contourf(xx, yy, w, cmap=colormap) # test window
     # plt.axis('scaled')
     # plt.colorbar()
     # plt.show
     
-    # rephase the time domain
+    # rephase the time domain - isn't necessary unless we do something weird with extra phases applied
     # angle_dqc = np.angle(cm_DQC[0,0])
     # angle_nrp = np.angle(cm_NRP[0,0])
     # angle_rp = np.angle(cm_RP[0,0])
@@ -936,6 +897,7 @@ def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam
     cm_NRP = cm_NRP * w
     cm_RP = cm_RP * w
     
+    # plots to test the windowed time domains
     # ax_lim = [np.min(t21),np.max(t21)]
     # ax_lim = [0, 116]
     # plot2Dspectra(t21, t43, cm_DQC, n_cont, ax_lim=ax_lim,title=r'DQC($\tau$) with ($\tau_{32}$ = 0)',domain = 'time')
@@ -943,7 +905,7 @@ def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam
     # plot2Dspectra(t21, t43, cm_RP, n_cont, ax_lim=ax_lim,title=r'RP($\tau$) with ($\tau_{32}$ = 0)',domain = 'time')
     
     
-    # monoC_lam = monoC_lam / 2 #nm
+    # take the FFT of the windowed time domain based on the experiment of interest
     if timing_mode == 't32 = 0':
         time_ax = t21
         FT_dqc, ax1, ax2 = FFT_2d(cm_DQC, t21ax_rt, time_ax, monoC_lam, scan_type='DQC')
@@ -952,14 +914,14 @@ def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam
         FT_rp = np.flipud(FT_rp)
         ax1_nrprp, ax2_nrprp = ax1_dqc, ax2_dqc = ax1, ax2
     elif timing_mode == 't43 = 0':
-        if FT2D_mode == 0:
+        if FT2D_mode == 0: # DON'T FFT along t32
             time_ax = t2_out[:,0]#t32[0,:]
             FT_dqc, ax1, ax2 = FFT_1d(cm_DQC, t21ax_rt, time_ax, monoC_lam)
             FT_nrp, ax1, ax2 = FFT_1d(cm_NRP, t21ax_rt, time_ax, monoC_lam)
             FT_rp,  ax1, ax2 = FFT_1d(cm_RP,  t21ax_rt, time_ax, monoC_lam)
             # FT_rp = np.flipud(FT_rp)
             ax1_nrprp, ax2_nrprp = ax1_dqc, ax2_dqc = ax1, ax2
-        elif FT2D_mode == 1:
+        elif FT2D_mode == 1: # DO FFT along t32
             time_ax = t2_out[:,0] # I don't think this is used when FT2D_mode = 1, but the function needs it anyway
             FT_dqc, ax1, ax2 = FFT_2d(cm_DQC, t21ax_rt, time_ax, monoC_lam, scan_type='DQC') # the 2x shift is done in the function
             ax1_dqc, ax2_dqc = ax1, ax2
@@ -968,14 +930,14 @@ def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam
             FT_rp = np.flipud(FT_rp)
             ax1_nrprp, ax2_nrprp= ax1, ax2
     elif timing_mode == 't21 = 0':
-        if FT2D_mode == 0:
+        if FT2D_mode == 0: # DON'T FFT along t32
             time_ax = t32[0,:] 
             FT_dqc, ax1, ax2 = FFT_1d(cm_DQC, t21ax_rt, time_ax,monoC_lam)
             FT_nrp, ax1, ax2 = FFT_1d(cm_NRP, t21ax_rt, time_ax,monoC_lam)
             FT_rp,  ax1, ax2 = FFT_1d(cm_RP,  t21ax_rt, time_ax,monoC_lam)
             # FT_rp = np.flipud(FT_rp)
             ax1_nrprp, ax2_nrprp = ax1_dqc, ax2_dqc = ax1, ax2
-        else:
+        else: # DO FFT along t32
             time_ax = t32[0,:] # I don't think this is used when FT2D_mode = 1, but the function needs it anyway
             FT_dqc, ax1, ax2 = FFT_2d(cm_DQC, t21ax_rt, time_ax, monoC_lam, scan_type='DQC') # the 2x shift is done in the function
             ax1_dqc, ax2_dqc = ax1, ax2
@@ -984,7 +946,7 @@ def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam
             FT_rp = np.flipud(FT_rp)
             ax1_nrprp, ax2_nrprp= ax1, ax2
     
-    
+    # plots to test the FFT
     # ax_lim = [np.min(ax1),np.max(ax1)]
     # # ax_lim = [27, 29] 
     # ax_lim = [28,30]
@@ -997,21 +959,18 @@ def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam
     # plot2Dspectra(ax1, ax2, FT_rp, n_cont, ax_lim=ax_lim, title=r'RP($\omega$) with '+timing_mode_str,domain='freq')#'($\tau_{32}$ = 0)',domain = 'freq')
 #%
 
-    # return t21, t43, cm_DQC, cm_NRP, cm_RP, ax1, ax2, FT_dqc, FT_nrp, FT_rp
-    # return t1_out, t2_out, cm_DQC, cm_NRP, cm_RP, ax1, ax2, FT_dqc, FT_nrp, FT_rp
     return t1_out, t2_out, cm_DQC, cm_NRP, cm_RP, ax1_dqc, ax2_dqc, ax1_nrprp, ax2_nrprp, FT_dqc, FT_nrp, FT_rp
-    # return t21, t43, cm_DQC, cm_NRP, cm_RP #, ax1, ax2, FT_dqc, FT_nrp, FT_rp
 
 #%%
 # =============================================================================
 # Can we optimize the difference between the interpolated and simulated?
 # =============================================================================
-def find_nearest(array, value):
+def find_nearest(array, value): # I think this was used when I was trying to window the chi-squared...
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return array[idx], idx
 
-def makeGaussian(size, fwhm = 3, center=None):
+def makeGaussian(size, fwhm = 3, center=None): # this too for windowing the chisquared
     """ Make a square gaussian kernel.
 
     size is the length of a side of the square
@@ -1036,34 +995,24 @@ def makeGaussian(size, fwhm = 3, center=None):
     return np.exp(-4*np.log(2) * ((x-x0)**2 + (y-y0)**2) / fwhm**2)
 
 
-def delayedGaussian(x,c,s):
-    w = np.ones(np.shape(x));
-    shifted = x-c;
-    index = shifted > 0;
-    w[index] = np.exp(-4.5*(shifted[index]**2)/(s**2));
-    return w 
- #%
+# def delayedGaussian(x,c,s):
+#     w = np.ones(np.shape(x));
+#     shifted = x-c;
+#     index = shifted > 0;
+#     w[index] = np.exp(-4.5*(shifted[index]**2)/(s**2));
+#     return w 
+#  #%
  
 #%
+# calculate chisquared difference between data and sim
 def chisq_calc_int2(params):
-    t21 = np.linspace(0,116.0805,num=Ntimesteps) 
-    # laser_lam, laser_sig, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam, theta12 = params
-    # laser_lam, laser_sig, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam, theta12, lam_shift = params
-    # laser_lam, laser_sig, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam, theta12, lam1, lam2 = params
-    # laser_lam, laser_sig, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam, theta12, omega_ge, omega_gep = params
-    # laser_lam, laser_sig, mu1_6MI, mu2_6MI, Gam, sigI, monoC_lam, theta12, omega_ge, omega_gep = params
+    t21 = np.linspace(0,116.0805,num=Ntimesteps) # generalize this so that when data coming in is over a different range this doesn't cause problems...
     laser_lam, laser_sig, mu1_6MI, mu2_6MI, Gam, sigI, monoC_lam, omega_ge, omega_gep = params
     
-
-    # t21, t43, cm_DQC, cm_NRP, cm_RP, ax1, ax2, FT_dqc, FT_nrp, FT_rp = sim2Dspec2(t21, laser_lam, laser_bw, mu1_6MI, mu2_6MI, Gam, sigI, delta,monoC_lam,theta12)
-    # t21, t43, cm_DQC, cm_NRP, cm_RP, ax1, ax2, FT_dqc, FT_nrp, FT_rp  = sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam,theta12)#, plot_mode=1)
-    # t21, t43, cm_DQC, cm_NRP, cm_RP, ax1, ax2, FT_dqc, FT_nrp, FT_rp  = sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam,theta12, lam1, lam2)#, plot_mode=1)
-    # t21, t43, cm_DQC, cm_NRP, cm_RP, ax1, ax2, FT_dqc, FT_nrp, FT_rp  = sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam,theta12, omega_ge, omega_gep)#, plot_mode=1)
-    # t21, t43, cm_DQC, cm_NRP, cm_RP, ax1, ax2, FT_dqc, FT_nrp, FT_rp  = sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, monoC_lam,theta12, omega_ge, omega_gep)#, plot_mode=1)
-    # t21, t43, cm_DQC, cm_NRP, cm_RP, ax1, ax2, FT_dqc, FT_nrp, FT_rp  = sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, monoC_lam,omega_ge, omega_gep)#, plot_mode=1)
     t1_out, t2_out, cm_DQC, cm_NRP, cm_RP, ax1_dqc, ax2_dqc, ax1_nrprp, ax2_nrprp, FT_dqc, FT_nrp, FT_rp = sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, monoC_lam, omega_ge, omega_gep)
 
 
+    # I think this is where I was trying to create a window for the difference map
     # sim_idx = np.array([459, 642])
     # sim_idx_28to30 = sim_idx
     # ax1_28to30 = ax1[sim_idx[0]:sim_idx[1]]
@@ -1143,7 +1092,7 @@ def chisq_calc_int2(params):
     sim_denom = np.max(np.max(np.abs(np.real(FT_rp))))
     exp_denom = np.max(np.max(np.abs(np.real(RP_exp_interp))))
     # print('sim: '+str(sim_denom))
-    if sim_denom == 0:
+    if sim_denom == 0: # is there a better way to remove the zeros?
         sim_denom = 1
     #     print(params)
     chisq_rp_re = (np.abs(np.real(FT_rp))/sim_denom - np.abs(np.real(RP_exp_interp))/exp_denom)**2 * weight_func
@@ -1193,6 +1142,7 @@ def chisq_calc_int2(params):
     return chisq_tot 
 
 #%
+# plot data and sim and difference comparisons
 def plot_comparer(ax1,ax2, data, sim, phase_cond, compare_mode = 'real', domain='freq',figsize=(16,4), ax_lim=[28,30],n_cont=15, save_mode = 0, file_name = '',scan_folder=scan_folder,weight_func_mode=1):
     axes_fontsize = 14
     title=phase_cond + ' Experiment vs Simulation'
