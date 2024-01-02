@@ -91,33 +91,44 @@ def get_c_spectra():
     
     # os.chdir('/Users/clairealbrecht/Dropbox/MATLAB_programs/claire_programs/from_Lulu/20230726')
     # os.chdir('/Users/calbrecht/Dropbox/MATLAB_programs/claire_programs/from_Lulu/20230726')
-    os.chdir(terminalID+'Dropbox/MATLAB_programs/claire_programs/from_Lulu/20230726')
+    # os.chdir(terminalID+'Dropbox/MATLAB_programs/claire_programs/from_Lulu/20230726')
     # file_name = 'DNTDP_10perc_20230306_finescan_10nm_min.txt'
     # file_name = '20230726_MNS_4uM_20230726_finescan.txt'
+    
+    
+    import os.path
+    from pathlib import Path
+
+    home = str(Path.home())
+    path = os.path.join(home,'Documents','github_base','Data','CD_Abs','20230726')
+    os.chdir(path)
+    
     buf_file_name = '20230726_buffer2.txt'
     buf_data = np.loadtxt(buf_file_name, skiprows=21)
-
+    file_name = '20230726_MNS_4uM_20230726_finescan.txt'
     
     
-    # os.chdir('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230726')
-    # os.chdir('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230726')
-    os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230726')
-    # file_name = 'MNS_4uM_20230726_finescan_10nm_min_smoothed.txt'
-    file_name = 'DNTDP_10perc_20230306_finescan_10nm_min_smoothed.txt'
+    # # os.chdir('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230726')
+    # # os.chdir('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230726')
+    # # os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230726')
+    # # file_name = 'MNS_4uM_20230726_finescan_10nm_min_smoothed.txt'
+    # file_name = 'DNTDP_10perc_20230306_finescan_10nm_min_smoothed.txt'
     
-    # os.chdir('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI DNTDP/CD/20230823-juliaCD')
-    # os.chdir('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI DNTDP/CD/20230823-juliaCD')
-    os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI DNTDP/CD/20230823-juliaCD')
-    file_name = 'DNTDP_10perc_window5mm_pathlength10mm_QS-accum-BS'
-    # os.chdir('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
-    # os.chdir('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
-    os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
-    file_name = 'MNS_fresh_window5mm_pathlength10mm_QS-accum_smoothed'
-    print('NOTE: using data from julias instrument')
+    # # os.chdir('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI DNTDP/CD/20230823-juliaCD')
+    # # os.chdir('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI DNTDP/CD/20230823-juliaCD')
+    # os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI DNTDP/CD/20230823-juliaCD')
+    # file_name = 'DNTDP_10perc_window5mm_pathlength10mm_QS-accum-BS'
+    # # os.chdir('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
+    # # os.chdir('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
+    # os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
+    # file_name = 'MNS_fresh_window5mm_pathlength10mm_QS-accum_smoothed'
+    # print('NOTE: using data from julias instrument')
     
+    files = os.listdir()
+    file_name = files[1]
     print('...loading: '+file_name)
-    # data = np.loadtxt(file_name, skiprows=21)
-    data = np.loadtxt(file_name).T
+    data = np.loadtxt(file_name, skiprows=21)
+    # data = np.loadtxt(file_name).T
     
 
     
@@ -287,7 +298,7 @@ for i in range(nEle-1):
     c[i,i+1] = sp.sqrt(i+1)  
 cD = c.T    
 
-muOp = cD + c
+muOp = cD + c # proportional to position operator (x = sqrt(hbar/ 2m omega) (c + cD))
 
 # Vibrational Modes                                #***#   6
 nVib = int(nVib)
@@ -332,6 +343,7 @@ for i in range(len(alpha)):
 alpha=alpha_tex
         
 matrix_plotter(hamA, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=14)
+# matrix_plotter(h6A, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=14)
 
 
 # Diagonalize Hamiltonian
@@ -455,15 +467,15 @@ Rvec = R12*unitR
 magVecA = np.cross(unitR, muA) # this is currently perpendicular to R and mu...
 # magVecB = np.cross(-unitR, muB) 
 
-magA = [magVecA[i]*muOp for i in (0,1,2)]
+magA = [magVecA[i]*muOp for i in (0,1,2)] # shape: (3,3,3) -- is this right?
 # magB = [magVecB[i]*muOp for i in (0,1,2)]
 magA = np.array(magA)
 
 # magB = magA # making monomers identical!
 
-op1 = kr(magA[0], Ivib) 
-op2 = kr(magA[1], Ivib) 
-op3 = kr(magA[2], Ivib) 
+op1 = kr(magA[0], Ivib) + kr(Iel,Ivib) # CSA - do i need the second term?
+op2 = kr(magA[1], Ivib) + kr(Iel,Ivib)
+op3 = kr(magA[2], Ivib) + kr(Iel,Ivib)
 # op1 = kr4(magA[0], Iel, Ivib, Ivib) + kr4(Iel, magB[0], Ivib, Ivib)
 # op2 = kr4(magA[1], Iel, Ivib, Ivib) + kr4(Iel, magB[1], Ivib, Ivib)
 # op3 = kr4(magA[2], Iel, Ivib, Ivib) + kr4(Iel, magB[2], Ivib, Ivib)
@@ -481,7 +493,7 @@ RS = (H*nubar2nu*epsilon0/(4*Hbar)) * dot(magA, muA) # should be a number?
 
 Area = RS*epsilon0*nubar2nu/(7.659e-54)
 sigma=100 # inhomogenous linewidth (placeholder for now)
-Height = Area/(sigma * ma.sqrt(2 * Pi) * nubar2nu) / 2
+Height = Area/(sigma * ma.sqrt(2 * Pi) * nubar2nu) / 2 
 
 #%%
 
