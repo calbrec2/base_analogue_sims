@@ -60,7 +60,7 @@ def matrix_plotter(omegas, alpha_x, alpha_y, title, frac=0.8, size=6, fontsize=1
         else: color='k'
         ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center', color=color,fontsize=label_fontsize)
     ax.set_xticks(np.arange(len(alpha_x)));
-    ax.set_yticks(np.arange(len(alpha_x)));
+    ax.set_yticks(np.arange(len(alpha_y)));
     ax.set_xticklabels(alpha_x,fontsize=fontsize);
     ax.set_yticklabels(alpha_y,fontsize=fontsize);
     # ax.set_xticklabels(['']+alpha_x,fontsize=fontsize);
@@ -269,13 +269,13 @@ def SimData(stickdata, data, gamma, sigma, norm):
 # =============================================================================
 lam = 2 #0.71#1.54 # huang-rhys parameter: displacement of excited state well w.r.t. ground state well
 epsilon0 = 29500 # energy gap from ground state (g) to real excited state (f)
-omega0=100 #800/2 # spacing of vibrational levels (set via ground state?)
+omega0=65 #800/2 # spacing of vibrational levels (set via ground state?)
 omega_ge=epsilon0/2 # virtual state energy spacing
 
 # =============================================================================
 # set number of electronic and vibrational states in hamiltonian
 # =============================================================================
-nVib = 2
+nVib = 4
 nEle = 3 # CSA - changed this so that we can vary the # of electronic states
 # ...assuming 0=ground state, 1=virtual state, 2=real excited state
 # =============================================================================
@@ -322,7 +322,7 @@ bDb = sp.dot(bD,b)  # vibrational number operator
 
 
 
-#%%
+#%
 # =============================================================================
 # Generate Hamiltonian for monomer A (see eq 17 from Kringel et al)
 # =============================================================================
@@ -380,20 +380,42 @@ alpha_fs = alpha[nVib*(nEle-1):nVib*nEle]
 
 
 # look at sub matrices for transitions
-matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
-matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
-matrix_plotter(omegas_eeps, alpha_es, alpha_es,title=r"Energies for $\Sigma_{i,j} \omega_{e_ie'_j}$",frac=0.99,label_fontsize=18)
-matrix_plotter(omegas_gfs, alpha_gs, alpha_fs,title=r'Energies for $\Sigma_{i} \omega_{gf_i}$',frac=0.99,label_fontsize=18)
+# matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
+# matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
+# matrix_plotter(omegas_eeps, alpha_es, alpha_es,title=r"Energies for $\Sigma_{i,j} \omega_{e_ie'_j}$",frac=0.99,label_fontsize=18)
+# matrix_plotter(omegas_gfs, alpha_gs, alpha_fs,title=r'Energies for $\Sigma_{i} \omega_{gf_i}$',frac=0.99,label_fontsize=18)
 #%%
+omegas= np.real(np.subtract.outer(epsA,epsA))
+omegas_ges = omegas[nVib:nVib*(nEle-1),0:nVib]
+omegas_ges[:,1::2] = np.zeros(omegas_ges[:,1::2].shape)
+omegas_ges[::2,:] = np.zeros(omegas_ges[::2,:].shape)
+matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
+
+omegas_ges = omegas_ges[1::2,::2]
+matrix_plotter(omegas_ges, alpha_gs[::2], alpha_es[1::2],title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
+# omegas_ges = omegas_ges[1::2,::2]
+# omegas_ges = omegas_ges[0,::2].reshape(int(len(omegas_ges)/2),1)
+omegas_ges = omegas_ges[:,0].reshape(omegas_ges.shape[1],1)
+matrix_plotter(omegas_ges, [alpha_gs[0]], np.array(alpha_es[1::2]),title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
+
+#%%
+
+omegas_efs = omegas_efs[1::2,::2]
+matrix_plotter(omegas_efs, alpha_es[1::2], alpha_fs[::2],title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
+
+
+# %%
 # flatten the 2x2 arrays so we can ploton scatter
 omegas_ges = omegas_ges.flatten()
 omegas_efs = omegas_efs.flatten()
 omegas_eeps = omegas_eeps.flatten()
 omegas_gfs = omegas_gfs.flatten()
 
+
 #%% let's look at all combinations of omegas_ges on xaxis and omegas_efs on the yaxis 
 # (peaks for the t32 = 0 experiment should be close to these locations)
-omega_ges_arr = np.tile(omegas_ges,len(omegas_ges)).reshape(len(omegas_ges),len(omegas_ges))
+# omega_ges_arr = np.tile(omegas_ges,len(omegas_ges)).reshape(len(omegas_ges),len(omegas_ges))
+omega_ges_arr = np.tile(omegas_ges,len(omegas_efs)*2).reshape(len(omegas_ges)*2,len(omegas_efs))
 omega_efs_arr = np.tile(omegas_efs,len(omegas_efs)).reshape(len(omegas_efs),len(omegas_efs))
 
 w,h = plt.figaspect(1.)
