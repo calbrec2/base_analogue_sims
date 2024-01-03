@@ -415,7 +415,7 @@ omegas_gfs = omegas_gfs.flatten()
 #%% let's look at all combinations of omegas_ges on xaxis and omegas_efs on the yaxis 
 # (peaks for the t32 = 0 experiment should be close to these locations)
 # omega_ges_arr = np.tile(omegas_ges,len(omegas_ges)).reshape(len(omegas_ges),len(omegas_ges))
-omega_ges_arr = np.tile(omegas_ges,len(omegas_efs)*2).reshape(len(omegas_ges)*2,len(omegas_efs))
+omega_ges_arr = np.tile(np.tile(omegas_ges,int(len(omegas_efs)/len(omegas_ges))),len(omegas_efs)).reshape(len(omegas_efs),len(omegas_efs))
 omega_efs_arr = np.tile(omegas_efs,len(omegas_efs)).reshape(len(omegas_efs),len(omegas_efs))
 
 w,h = plt.figaspect(1.)
