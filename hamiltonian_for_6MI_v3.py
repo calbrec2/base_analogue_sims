@@ -267,15 +267,15 @@ def SimData(stickdata, data, gamma, sigma, norm):
 # =============================================================================
 # define energy parameters (...later optimize)
 # =============================================================================
-lam = 2 #0.71#1.54 # huang-rhys parameter: displacement of excited state well w.r.t. ground state well
-epsilon0 = 29500 # energy gap from ground state (g) to real excited state (f)
-omega0=65 #800/2 # spacing of vibrational levels (set via ground state?)
+lam = 1.5 #2 #0.71#1.54 # huang-rhys parameter: displacement of excited state well w.r.t. ground state well
+epsilon0 = 29300 #29500 # energy gap from ground state (g) to real excited state (f)
+omega0=160#100 #800/2 # spacing of vibrational levels (set via ground state?)
 omega_ge=epsilon0/2 # virtual state energy spacing
 
 # =============================================================================
 # set number of electronic and vibrational states in hamiltonian
 # =============================================================================
-nVib = 4
+nVib = 2#4
 nEle = 3 # CSA - changed this so that we can vary the # of electronic states
 # ...assuming 0=ground state, 1=virtual state, 2=real excited state
 # =============================================================================
@@ -342,7 +342,7 @@ for i in range(len(alpha)):
         alpha_tex.append(r'$'+alpha_list[j]+'_'+str(j)+'$')
 alpha=alpha_tex
         
-matrix_plotter(hamA, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=14)
+# matrix_plotter(hamA, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=14)
 # matrix_plotter(h6A, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=14)
 
 
@@ -361,13 +361,15 @@ diag_ham = np.diag(np.real(epsA))
 # np.count_nonzero(diag_ham - np.diag(np.diagonal(diag_ham))) # check that it is diagonal matrix
 
 # plot diagonalized hamiltonian
-matrix_plotter(diag_ham, alpha, alpha, title=r'Diagonalized Hamiltonian of monomer $(cm^{-1} x10^{3})$' ,frac=0.8,size=nEle*nVib,title_fontsize=14)
+# matrix_plotter(diag_ham, alpha, alpha, title=r'Diagonalized Hamiltonian of monomer $(cm^{-1} x10^{3})$' ,frac=0.8,size=nEle*nVib,title_fontsize=14)
 
-#%%
-# look at all possible energy differences given the eigenenergies of hamA
-# need these for the omega21, oemga_32, omega_43 values
+#%
+# =============================================================================
+#  look at all possible energy differences given the eigenenergies of hamA
+#  need these for the omega21, oemga_32, omega_43 values
+# =============================================================================
 omegas= np.real(np.subtract.outer(epsA,epsA))
-matrix_plotter(omegas, alpha, alpha, title=r'Differences between eigenenergies ($cm^{-1}$ x$10^{3}$)',frac=0.8,size=nEle*nVib,title_fontsize=14)
+# matrix_plotter(omegas, alpha, alpha, title=r'Differences between eigenenergies ($cm^{-1}$ x$10^{3}$)',frac=0.8,size=nEle*nVib,title_fontsize=14)
 
 omegas_ges = omegas[nVib:nVib*(nEle-1),0:nVib]
 omegas_efs = omegas[(nEle-1)*nVib:nEle*nVib, nVib:2*nVib]
@@ -384,46 +386,87 @@ alpha_fs = alpha[nVib*(nEle-1):nVib*nEle]
 # matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
 # matrix_plotter(omegas_eeps, alpha_es, alpha_es,title=r"Energies for $\Sigma_{i,j} \omega_{e_ie'_j}$",frac=0.99,label_fontsize=18)
 # matrix_plotter(omegas_gfs, alpha_gs, alpha_fs,title=r'Energies for $\Sigma_{i} \omega_{gf_i}$',frac=0.99,label_fontsize=18)
+
 #%%
+# =============================================================================
+# Impose selection rules by only allowing even g's, odd e's and even f's
+# =============================================================================
+# 20240103 CSA: the shift imposed by this method doesn't seem to look right... I am missing something. It pushes the peaks too low.
+# need omegas_efs to be shifted down by omega0 (see non-selection rule attempt below this section), not by omegas_gep - omega_ge... 
+# what determines this spacing?
+# also with this method the 'middle square' is not the same proportions as the top and bottom squares, why is this? What is causing this?
+# =============================================================================
+
+# omegas= np.real(np.subtract.outer(epsA,epsA))
+# omegas_ges = omegas[nVib:nVib*(nEle-1),0:nVib]
+omegas_ges[:,1::2] = np.zeros(omegas_ges[:,1::2].shape) # replace odd columns with zeros
+omegas_ges[::2,:] = np.zeros(omegas_ges[::2,:].shape) # replace even rows with zeros
+# check with matrix plotter that this is doing what I want it to
+# matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.89,label_fontsize=18)
+
+omegas_ges = omegas_ges[1::2,::2] # only select the omegas_ges that we want
+# matrix_plotter(omegas_ges, alpha_gs[::2], alpha_es[1::2],title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
+
+omegas_ges = omegas_ges[:,0].reshape(omegas_ges[:,0].shape[0],1) # we actually dont want any g other than g0
+# matrix_plotter(omegas_ges, [alpha_gs[0]], np.array(alpha_es[1::2]),title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
+
+#%
+# repeat for omegas_efs
 omegas= np.real(np.subtract.outer(epsA,epsA))
-omegas_ges = omegas[nVib:nVib*(nEle-1),0:nVib]
-omegas_ges[:,1::2] = np.zeros(omegas_ges[:,1::2].shape)
-omegas_ges[::2,:] = np.zeros(omegas_ges[::2,:].shape)
-matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
+omegas_efs = omegas[(nEle-1)*nVib:nEle*nVib, nVib:2*nVib]
+# matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.96,label_fontsize=18)
+# omegas_efs[1::2,::2] = np.zeros(omegas_efs[1::2,::2].shape) # replace odd columns with zeros
+omegas_efs[:,::2] = np.zeros(omegas_efs[:,::2].shape) # replace even columns with zeros
+omegas_efs[1::2,:] = np.zeros(omegas_efs[1::2,:].shape) # replace odd rows with zeros
+# check with matrix plotter that this is doing what I want it to
+# matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.89,label_fontsize=18)
 
-omegas_ges = omegas_ges[1::2,::2]
-matrix_plotter(omegas_ges, alpha_gs[::2], alpha_es[1::2],title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
-# omegas_ges = omegas_ges[1::2,::2]
-# omegas_ges = omegas_ges[0,::2].reshape(int(len(omegas_ges)/2),1)
-omegas_ges = omegas_ges[:,0].reshape(omegas_ges.shape[1],1)
-matrix_plotter(omegas_ges, [alpha_gs[0]], np.array(alpha_es[1::2]),title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
+omegas_efs = omegas_efs[::2,1::2] # select omegas_efs that we want
+# matrix_plotter(omegas_efs, alpha_es[1::2], alpha_fs[::2],title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
 
+# =============================================================================
 #%%
+# =============================================================================
+# =============================================================================
+# # IF NO SELECTION RULES, USE THE FOLLOWING TO TEST SHIFT OFF DIAGONAL
+# =============================================================================
+# omegas_efs = omegas_efs - omega0 #200
+# omegas_ges = omegas_ges[:,0]
+# looks like data with the following params:
+    # lam = 1.5 
+    # epsilon0 = 29300 
+    # omega0=160
+# =============================================================================
+# =============================================================================
+# =============================================================================
 
-omegas_efs = omegas_efs[1::2,::2]
-matrix_plotter(omegas_efs, alpha_es[1::2], alpha_fs[::2],title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
-
-
-# %%
-# flatten the 2x2 arrays so we can ploton scatter
+# flatten the 2x2 arrays so we can plot scatter
 omegas_ges = omegas_ges.flatten()
 omegas_efs = omegas_efs.flatten()
 omegas_eeps = omegas_eeps.flatten()
 omegas_gfs = omegas_gfs.flatten()
 
 
-#%% let's look at all combinations of omegas_ges on xaxis and omegas_efs on the yaxis 
-# (peaks for the t32 = 0 experiment should be close to these locations)
+
+# =============================================================================
+# % let's look at all combinations of omegas_ges on xaxis and omegas_efs on the yaxis 
+#  (peaks for the t32 = 0 experiment should be close to these locations)
+# =============================================================================
 # omega_ges_arr = np.tile(omegas_ges,len(omegas_ges)).reshape(len(omegas_ges),len(omegas_ges))
 omega_ges_arr = np.tile(np.tile(omegas_ges,int(len(omegas_efs)/len(omegas_ges))),len(omegas_efs)).reshape(len(omegas_efs),len(omegas_efs))
 omega_efs_arr = np.tile(omegas_efs,len(omegas_efs)).reshape(len(omegas_efs),len(omegas_efs))
 
+
+omega_ges_arr = omega_ges_arr.T # transpose energies for the xaxis
+# omega_efs_arr = omega_efs_arr.T # transpose energies for the yaxis
+# if you DON'T transpose you get a diamond, if you do you get a square... why? which is right?
+# need a transpose to get all the combinations...
+
 w,h = plt.figaspect(1.)
 fig = plt.figure(figsize=[w,h])
 ax = fig.add_subplot(111)
-omega_ges_arr = omega_ges_arr.T # transpose energies for the xaxis
 ax.scatter(omega_ges_arr/1e3,omega_efs_arr/1e3)
-i = 3 #np.arange(0,4)
+i = 0 #np.arange(0,4)
 j = 3 #np.arange(0,4) #1
 print('omega_ges:' + str(omega_ges_arr[i,j]))
 print('oemga_efs:' + str(omega_efs_arr[i,j]))
@@ -432,8 +475,10 @@ print('oemga_efs:' + str(omega_efs_arr[i,j]))
 # ax.scatter((omega_ges_arr.T)[i,:]/1e3,omega_efs_arr[:,i]/1e3,color='r',marker='x')
 ax.scatter(omega_ges_arr[i,j]/1e3,omega_efs_arr[i,j]/1e3,color='r',marker='x')
 ax.plot(np.arange(14200/1e3,16300/1e3),np.arange(14200/1e3,16300/1e3),'k--')
-ax.set_xlim(14100/1e3, 16300/1e3)
-ax.set_ylim(14100/1e3, 16300/1e3)
+# ax.set_xlim(14100/1e3, 16300/1e3)
+# ax.set_ylim(14100/1e3, 16300/1e3)
+ax.set_xlim(13800/1e3, 16800/1e3)
+ax.set_ylim(13800/1e3, 16800/1e3)
 # plt.hlines(10**7/675,min(omegas_ges_arr[0,:]),max(omegas_ges_arr[0,:]),color='k',linestyle='--')
 # plt.vlines(10**7/675,min(omegas_efs_arr[0,:]),max(omegas_efs_arr[0,:]),color='k',linestyle='--')
 laser_loc = [10**7/675/1e3, 10**7/675/1e3]
@@ -442,6 +487,9 @@ circle=plt.Circle((laser_loc[0],laser_loc[1]),(10**7/(675-15) - 10**7/(675+15))/
 ax.add_patch(circle);
 ax.set_xlabel(r'$\omega_{ge}$',fontsize=14)
 ax.set_ylabel(r'$\omega_{ef}$',fontsize=14)
+
+
+
 
 #%% try the same thing for the t21= 0 experiment?
 omega_eeps_arr = np.tile(omegas_eeps,len(omegas_eeps)).reshape(len(omegas_eeps),len(omegas_eeps))
