@@ -275,7 +275,7 @@ omega_ge=epsilon0/2 # virtual state energy spacing
 # =============================================================================
 # set number of electronic and vibrational states in hamiltonian
 # =============================================================================
-nVib = 2#4
+nVib = 4
 nEle = 3 # CSA - changed this so that we can vary the # of electronic states
 # ...assuming 0=ground state, 1=virtual state, 2=real excited state
 # =============================================================================
@@ -342,8 +342,8 @@ for i in range(len(alpha)):
         alpha_tex.append(r'$'+alpha_list[j]+'_'+str(j)+'$')
 alpha=alpha_tex
         
-# matrix_plotter(hamA, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=14)
-# matrix_plotter(h6A, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=14)
+matrix_plotter(hamA, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)#14)
+matrix_plotter(h6A, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)
 
 
 # Diagonalize Hamiltonian
@@ -361,7 +361,7 @@ diag_ham = np.diag(np.real(epsA))
 # np.count_nonzero(diag_ham - np.diag(np.diagonal(diag_ham))) # check that it is diagonal matrix
 
 # plot diagonalized hamiltonian
-# matrix_plotter(diag_ham, alpha, alpha, title=r'Diagonalized Hamiltonian of monomer $(cm^{-1} x10^{3})$' ,frac=0.8,size=nEle*nVib,title_fontsize=14)
+matrix_plotter(diag_ham, alpha, alpha, title=r'Diagonalized Hamiltonian of monomer $(cm^{-1} x10^{3})$' ,frac=0.8,size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)
 
 #%
 # =============================================================================
@@ -369,7 +369,7 @@ diag_ham = np.diag(np.real(epsA))
 #  need these for the omega21, oemga_32, omega_43 values
 # =============================================================================
 omegas= np.real(np.subtract.outer(epsA,epsA))
-# matrix_plotter(omegas, alpha, alpha, title=r'Differences between eigenenergies ($cm^{-1}$ x$10^{3}$)',frac=0.8,size=nEle*nVib,title_fontsize=14)
+matrix_plotter(omegas, alpha, alpha, title=r'Differences between eigenenergies ($cm^{-1}$ x$10^{3}$)',frac=0.8,size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)
 
 omegas_ges = omegas[nVib:nVib*(nEle-1),0:nVib]
 omegas_efs = omegas[(nEle-1)*nVib:nEle*nVib, nVib:2*nVib]
@@ -382,11 +382,18 @@ alpha_fs = alpha[nVib*(nEle-1):nVib*nEle]
 
 
 # look at sub matrices for transitions
-# matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
-# matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
+matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
+matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
 # matrix_plotter(omegas_eeps, alpha_es, alpha_es,title=r"Energies for $\Sigma_{i,j} \omega_{e_ie'_j}$",frac=0.99,label_fontsize=18)
 # matrix_plotter(omegas_gfs, alpha_gs, alpha_fs,title=r'Energies for $\Sigma_{i} \omega_{gf_i}$',frac=0.99,label_fontsize=18)
 
+#%%
+plt.figure(figsize=[3,10]);
+plt.scatter(np.ones(len(epsA)),epsA,marker='.')
+plt.figure();
+plt.scatter(np.ones(len(omegas_efs[::2,1::2].flatten()))+1,omegas_efs[::2,1::2].flatten(),color='r',marker='o'); 
+# plt.scatter(np.ones(len(omegas_ges[1::2,::2].flatten())),omegas_ges[1::2,::2].flatten(),color='b',marker='o');
+plt.scatter(np.ones(len(omegas_ges[1::2,0].flatten())),omegas_ges[1::2,0].flatten(),color='b',marker='o');
 #%%
 # =============================================================================
 # Impose selection rules by only allowing even g's, odd e's and even f's
@@ -397,35 +404,35 @@ alpha_fs = alpha[nVib*(nEle-1):nVib*nEle]
 # also with this method the 'middle square' is not the same proportions as the top and bottom squares, why is this? What is causing this?
 # =============================================================================
 
-# omegas= np.real(np.subtract.outer(epsA,epsA))
-# omegas_ges = omegas[nVib:nVib*(nEle-1),0:nVib]
+omegas= np.real(np.subtract.outer(epsA,epsA))
+omegas_ges = omegas[nVib:nVib*(nEle-1),0:nVib]
 omegas_ges[:,1::2] = np.zeros(omegas_ges[:,1::2].shape) # replace odd columns with zeros
 omegas_ges[::2,:] = np.zeros(omegas_ges[::2,:].shape) # replace even rows with zeros
 # check with matrix plotter that this is doing what I want it to
-# matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.89,label_fontsize=18)
+matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.89,label_fontsize=18)
 
 omegas_ges = omegas_ges[1::2,::2] # only select the omegas_ges that we want
 # matrix_plotter(omegas_ges, alpha_gs[::2], alpha_es[1::2],title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
 
 omegas_ges = omegas_ges[:,0].reshape(omegas_ges[:,0].shape[0],1) # we actually dont want any g other than g0
-# matrix_plotter(omegas_ges, [alpha_gs[0]], np.array(alpha_es[1::2]),title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
+matrix_plotter(omegas_ges, [alpha_gs[0]], np.array(alpha_es[1::2]),title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
 
 #%
 # repeat for omegas_efs
 omegas= np.real(np.subtract.outer(epsA,epsA))
 omegas_efs = omegas[(nEle-1)*nVib:nEle*nVib, nVib:2*nVib]
-# matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.96,label_fontsize=18)
+matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.96,label_fontsize=18)
 # omegas_efs[1::2,::2] = np.zeros(omegas_efs[1::2,::2].shape) # replace odd columns with zeros
 omegas_efs[:,::2] = np.zeros(omegas_efs[:,::2].shape) # replace even columns with zeros
 omegas_efs[1::2,:] = np.zeros(omegas_efs[1::2,:].shape) # replace odd rows with zeros
 # check with matrix plotter that this is doing what I want it to
-# matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.89,label_fontsize=18)
+matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.89,label_fontsize=18)
 
 omegas_efs = omegas_efs[::2,1::2] # select omegas_efs that we want
-# matrix_plotter(omegas_efs, alpha_es[1::2], alpha_fs[::2],title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
+matrix_plotter(omegas_efs, alpha_es[1::2], alpha_fs[::2],title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
 
 # =============================================================================
-#%%
+#%
 # =============================================================================
 # =============================================================================
 # # IF NO SELECTION RULES, USE THE FOLLOWING TO TEST SHIFT OFF DIAGONAL
@@ -433,6 +440,7 @@ omegas_efs = omegas_efs[::2,1::2] # select omegas_efs that we want
 # omegas_efs = omegas_efs - omega0 #200
 # omegas_ges = omegas_ges[:,0]
 # looks like data with the following params:
+    # nVib = 2
     # lam = 1.5 
     # epsilon0 = 29300 
     # omega0=160
