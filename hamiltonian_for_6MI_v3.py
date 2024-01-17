@@ -267,9 +267,19 @@ def SimData(stickdata, data, gamma, sigma, norm):
 # =============================================================================
 # define energy parameters (...later optimize)
 # =============================================================================
-lam = 1.5 #2 #0.71#1.54 # huang-rhys parameter: displacement of excited state well w.r.t. ground state well
-epsilon0 = 29300 #29500 # energy gap from ground state (g) to real excited state (f)
-omega0=160#100 #800/2 # spacing of vibrational levels (set via ground state?)
+# lam = 5 #3 #1.5 #2 #0.71#1.54 # huang-rhys parameter: displacement of excited state well w.r.t. ground state well
+# epsilon0 = 27000 #29300 #29500 # energy gap from ground state (g) to real excited state (f)
+# omega0=50#100#80 #160#100 #800/2 # spacing of vibrational levels (set via ground state?)
+# omega_ge=epsilon0/2 # virtual state energy spacing
+# 20240116: the above set of parameters seems to work but they are all out of wack
+# lam = 3 #3 #1.5 #2 #0.71#1.54 # huang-rhys parameter: displacement of excited state well w.r.t. ground state well
+# epsilon0 = 28500 #29300 #29500 # energy gap from ground state (g) to real excited state (f)
+# omega0=50#100#80 #160#100 #800/2 # spacing of vibrational levels (set via ground state?)
+# omega_ge=epsilon0/2 # virtual state energy spacing
+# 20240116: the above here are also close...
+lam = 2.5 #3 #1.5 #2 #0.71#1.54 # huang-rhys parameter: displacement of excited state well w.r.t. ground state well
+epsilon0 = 28600 #29300 #29500 # energy gap from ground state (g) to real excited state (f)
+omega0=80#100#80 #160#100 #800/2 # spacing of vibrational levels (set via ground state?)
 omega_ge=epsilon0/2 # virtual state energy spacing
 
 # =============================================================================
@@ -342,8 +352,8 @@ for i in range(len(alpha)):
         alpha_tex.append(r'$'+alpha_list[j]+'_'+str(j)+'$')
 alpha=alpha_tex
         
-matrix_plotter(hamA, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)#14)
-matrix_plotter(h6A, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)
+# matrix_plotter(hamA, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)#14)
+# matrix_plotter(h6A, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)
 
 
 # Diagonalize Hamiltonian
@@ -361,7 +371,7 @@ diag_ham = np.diag(np.real(epsA))
 # np.count_nonzero(diag_ham - np.diag(np.diagonal(diag_ham))) # check that it is diagonal matrix
 
 # plot diagonalized hamiltonian
-matrix_plotter(diag_ham, alpha, alpha, title=r'Diagonalized Hamiltonian of monomer $(cm^{-1} x10^{3})$' ,frac=0.8,size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)
+# matrix_plotter(diag_ham, alpha, alpha, title=r'Diagonalized Hamiltonian of monomer $(cm^{-1} x10^{3})$' ,frac=0.8,size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)
 
 #%
 # =============================================================================
@@ -369,7 +379,7 @@ matrix_plotter(diag_ham, alpha, alpha, title=r'Diagonalized Hamiltonian of monom
 #  need these for the omega21, oemga_32, omega_43 values
 # =============================================================================
 omegas= np.real(np.subtract.outer(epsA,epsA))
-matrix_plotter(omegas, alpha, alpha, title=r'Differences between eigenenergies ($cm^{-1}$ x$10^{3}$)',frac=0.8,size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)
+# matrix_plotter(omegas, alpha, alpha, title=r'Differences between eigenenergies ($cm^{-1}$ x$10^{3}$)',frac=0.8,size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)
 
 omegas_ges = omegas[nVib:nVib*(nEle-1),0:nVib]
 omegas_efs = omegas[(nEle-1)*nVib:nEle*nVib, nVib:2*nVib]
@@ -382,8 +392,8 @@ alpha_fs = alpha[nVib*(nEle-1):nVib*nEle]
 
 
 # look at sub matrices for transitions
-matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
-matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
+# matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
+# matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
 # matrix_plotter(omegas_eeps, alpha_es, alpha_es,title=r"Energies for $\Sigma_{i,j} \omega_{e_ie'_j}$",frac=0.99,label_fontsize=18)
 # matrix_plotter(omegas_gfs, alpha_gs, alpha_fs,title=r'Energies for $\Sigma_{i} \omega_{gf_i}$',frac=0.99,label_fontsize=18)
 
@@ -394,6 +404,7 @@ plt.figure();
 plt.scatter(np.ones(len(omegas_efs[::2,1::2].flatten()))+1,omegas_efs[::2,1::2].flatten(),color='r',marker='o'); 
 # plt.scatter(np.ones(len(omegas_ges[1::2,::2].flatten())),omegas_ges[1::2,::2].flatten(),color='b',marker='o');
 plt.scatter(np.ones(len(omegas_ges[1::2,0].flatten())),omegas_ges[1::2,0].flatten(),color='b',marker='o');
+plt.xlim(0,3)
 #%%
 # =============================================================================
 # Impose selection rules by only allowing even g's, odd e's and even f's
@@ -409,29 +420,35 @@ omegas_ges = omegas[nVib:nVib*(nEle-1),0:nVib]
 omegas_ges[:,1::2] = np.zeros(omegas_ges[:,1::2].shape) # replace odd columns with zeros
 omegas_ges[::2,:] = np.zeros(omegas_ges[::2,:].shape) # replace even rows with zeros
 # check with matrix plotter that this is doing what I want it to
-matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.89,label_fontsize=18)
+# matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.89,label_fontsize=18)
 
 omegas_ges = omegas_ges[1::2,::2] # only select the omegas_ges that we want
 # matrix_plotter(omegas_ges, alpha_gs[::2], alpha_es[1::2],title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
 
 omegas_ges = omegas_ges[:,0].reshape(omegas_ges[:,0].shape[0],1) # we actually dont want any g other than g0
-matrix_plotter(omegas_ges, [alpha_gs[0]], np.array(alpha_es[1::2]),title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
+# matrix_plotter(omegas_ges, [alpha_gs[0]], np.array(alpha_es[1::2]),title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
 
 #%
 # repeat for omegas_efs
 omegas= np.real(np.subtract.outer(epsA,epsA))
 omegas_efs = omegas[(nEle-1)*nVib:nEle*nVib, nVib:2*nVib]
-matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.96,label_fontsize=18)
+# matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.96,label_fontsize=18)
 # omegas_efs[1::2,::2] = np.zeros(omegas_efs[1::2,::2].shape) # replace odd columns with zeros
 omegas_efs[:,::2] = np.zeros(omegas_efs[:,::2].shape) # replace even columns with zeros
 omegas_efs[1::2,:] = np.zeros(omegas_efs[1::2,:].shape) # replace odd rows with zeros
 # check with matrix plotter that this is doing what I want it to
-matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.89,label_fontsize=18)
+# matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.89,label_fontsize=18)
 
 omegas_efs = omegas_efs[::2,1::2] # select omegas_efs that we want
-matrix_plotter(omegas_efs, alpha_es[1::2], alpha_fs[::2],title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
+# matrix_plotter(omegas_efs, alpha_es[1::2], alpha_fs[::2],title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
 
 # =============================================================================
+# what selection rules do we need for eeps???
+# omegas_eeps = 
+# matrix_plotter(omegas_eeps, alpha_es,alpha_es,title='omegas_eeps',frac=0.99)
+
+
+
 #%
 # =============================================================================
 # =============================================================================
@@ -447,7 +464,7 @@ matrix_plotter(omegas_efs, alpha_es[1::2], alpha_fs[::2],title=r'Energies for $\
 # =============================================================================
 # =============================================================================
 # =============================================================================
-
+#%%
 # flatten the 2x2 arrays so we can plot scatter
 omegas_ges = omegas_ges.flatten()
 omegas_efs = omegas_efs.flatten()
@@ -487,6 +504,8 @@ ax.plot(np.arange(14200/1e3,16300/1e3),np.arange(14200/1e3,16300/1e3),'k--')
 # ax.set_ylim(14100/1e3, 16300/1e3)
 ax.set_xlim(13800/1e3, 16800/1e3)
 ax.set_ylim(13800/1e3, 16800/1e3)
+# ax.set_xlim(12800/1e3, 18800/1e3)
+# ax.set_ylim(12800/1e3, 18800/1e3)
 # plt.hlines(10**7/675,min(omegas_ges_arr[0,:]),max(omegas_ges_arr[0,:]),color='k',linestyle='--')
 # plt.vlines(10**7/675,min(omegas_efs_arr[0,:]),max(omegas_efs_arr[0,:]),color='k',linestyle='--')
 laser_loc = [10**7/675/1e3, 10**7/675/1e3]
@@ -529,31 +548,45 @@ ax.set_ylabel(r'$\omega_{gf}$',fontsize=14)
 
 
 
-#%% Simulate absorption & CD spectra from these energies
-
+# =============================================================================
+# %% Simulate absorption & CD spectra from these energies
+# =============================================================================
+# =============================================================================
+# # How to calculate rotational strength for monomer??
+# =============================================================================
 # define dipole vector for monomer
 muA = np.array([0.1,0.2,0.3]) # what should this be??
 R12 = 1 # what should this be?
 
 
-muTot = np.array([muA[i]*kr(muOp, Ivib) for i in range(3)]) # from above: muOp = cD + c
-                                                    # 3 because muA is a 3D vector
+# muTot = np.array([muA[i]*kr(muOp, Ivib) for i in range(3)]) # from above: muOp = cD + c
+# matrix_plotter(omega0*bDb, alpha, alpha, title='w/vibrational levels ',frac=0.96)                                                 # 3 because muA is a 3D vector
+muTot = np.array([muA[i]*kr(muOp, omega0*bDb) for i in range(3)]) # from above: muOp = cD + c
+# using omega0*bDb to try to make muTot a function of the vibrational level (instead of Ivib where it is independent of vib level)
+# matrix_plotter(muTot[2,:,:], alpha, alpha, title='muTot',frac=0.96)
 
+# I don't think I'll need R or R12 for the monomer case, but leaving it here for now until I know for sure
 unitR = np.array([0, 0, 1])
 Rvec = R12*unitR
 
-magVecA = np.cross(unitR, muA) # this is currently perpendicular to R and mu...
+# magVecA = np.cross(unitR, muA) # this is currently perpendicular to R and mu...
+# 20240116: Need a new way to define magVecA so the dot product between magVecA and muA is nonzero
+magVecA = np.array([-0.1,0.2,0.3]) # for not set some arbitrary magVec so that np.dot(magVecA,muA) =/= 0
 # magVecB = np.cross(-unitR, muB) 
 
-magA = [magVecA[i]*muOp for i in (0,1,2)] # shape: (3,3,3) -- is this right?
+magA = [magVecA[i]*muOp for i in (0,1,2)] # shape: (3,3,3), muOp = c + cd proportional to x operator
 # magB = [magVecB[i]*muOp for i in (0,1,2)]
 magA = np.array(magA)
 
 # magB = magA # making monomers identical!
 
-op1 = kr(magA[0], Ivib) + kr(Iel,Ivib) # CSA - do i need the second term?
-op2 = kr(magA[1], Ivib) + kr(Iel,Ivib)
-op3 = kr(magA[2], Ivib) + kr(Iel,Ivib)
+# how to make the vibrational levels optically active?
+# op1 = kr(magA[0], Ivib) + kr(Iel,Ivib) # CSA - do i need the second term?
+# op2 = kr(magA[1], Ivib) + kr(Iel,Ivib)
+# op3 = kr(magA[2], Ivib) + kr(Iel,Ivib)
+op1 = kr(magA[0], omega0*bDb) + kr(Iel,Ivib)  #* # 20240116: try using bDb*omega0 instead of identity operator to make the operator depend on vibrational level
+op2 = kr(magA[1], omega0*bDb) + kr(Iel,Ivib) #omega0*
+op3 = kr(magA[2], omega0*bDb) + kr(Iel,Ivib) #omega0*
 # op1 = kr4(magA[0], Iel, Ivib, Ivib) + kr4(Iel, magB[0], Ivib, Ivib)
 # op2 = kr4(magA[1], Iel, Ivib, Ivib) + kr4(Iel, magB[1], Ivib, Ivib)
 # op3 = kr4(magA[2], Iel, Ivib, Ivib) + kr4(Iel, magB[2], Ivib, Ivib)
@@ -561,13 +594,16 @@ op3 = kr(magA[2], Ivib) + kr(Iel,Ivib)
   
 magOps = [op1, op2, op3]
 
-mVecA = muA*mumonomer 
+mVecA = muA*mumonomer  # electric dipole moment scaled by correct units (mumonomer)
 # mVecB = muB*mumonomer
 
 # how to define rotational strength for monomer?  hertzberg-teller??
 # look at eqs on 2491 of Nooijen_Int J of Quantum Chemistry_2006.pdf
 # RS = (H*nubar2nu*epsilon0/(4*Hbar)) * dot(np.cross(mVecA, mVecB), Rvec)
-RS = (H*nubar2nu*epsilon0/(4*Hbar)) * dot(magA, muA) # should be a number? 
+RS = (H*nubar2nu*epsilon0/(4*Hbar)) * dot(magA, mVecA) # this is a 3x3 matrix...
+# 20240116: actually a rotational strength for each transition maybe makes sense? 
+# RS = (H*nubar2nu*epsilon0/(4*Hbar)) * dot(magVecA, mVecA) # should be a number? 
+# check constants out front... I am using a different form of Rosenfeld equation than is used for the dimer
 
 Area = RS*epsilon0*nubar2nu/(7.659e-54)
 sigma=100 # inhomogenous linewidth (placeholder for now)
@@ -578,9 +614,12 @@ Height = Area/(sigma * ma.sqrt(2 * Pi) * nubar2nu) / 2
 eps, vecs = epsA, vecsA
 
 # absorbtion intensities
-Ix = dot(muTot[0], vecs)[0]
-Iy = dot(muTot[1], vecs)[0]
-Iz = dot(muTot[2], vecs)[0]
+# Ix = dot(muTot[0], vecs)[0] # why do we need the eigenvectors here? What is this doing for us physically?
+# Iy = dot(muTot[1], vecs)[0] # are the eigenvectors setting up the collective modes?
+# Iz = dot(muTot[2], vecs)[0]
+Ix = dot(muTot[0], vecs)#[0]
+Iy = dot(muTot[1], vecs)#[0]
+Iz = dot(muTot[2], vecs)#[0]
 SimI = (Ix**2 + Iy**2 + Iz**2)*(2/3)
 # does this still make sense? I guess since we are assuming e||f that maybe this is ok?
 
@@ -594,13 +633,14 @@ cAbsSpectrum = np.vstack([cAbs2append, cAbsSpectrum])
 
 gamma=40 # homogeneous linewidth (placeholder for now)
 normAbs = PseudoVoigtDistribution(epsilon0, gamma, sigma, epsilon0)
-simAbs = SimData(AbsData, cAbsSpectrum, gamma, sigma, normAbs)
+simAbs = SimData(AbsData, cAbsSpectrum, gamma, sigma, normAbs*1.1)
 
 plt.figure()
 plt.scatter(AbsData[:,0],AbsData[:,1])
-plt.plot(cAbsSpectrum[:,0], cAbsSpectrum[:,1])
+# plt.plot(cAbsSpectrum[:,0], cAbsSpectrum[:,1])
 plt.plot(simAbs[:,0],simAbs[:,1],'r')
 plt.xlim(10000,max(cAbsSpectrum[:,0]))
+plt.xlim(14000,16000)
 
 
 # CD intensities
@@ -622,9 +662,31 @@ simCD = SimData(CDdata, cCDSpectrum, gamma, sigma, normAbs)
 
 plt.figure()
 plt.scatter(CDdata[:,0],CDdata[:,1])
-plt.plot(cCDSpectrum[:,0], cCDSpectrum[:,1])
+# plt.plot(cCDSpectrum[:,0], cCDSpectrum[:,1])
 plt.plot(simCD[:,0],simCD[:,1],'r')
 plt.xlim(10000,max(cCDSpectrum[:,0]))
+
+#%%
+
+# Start by trying to define mu_if and mag_fi as a function of vibrational level
+muA = np.array([0.1,0.2,0.3]) # orientation of electric dipole in lab space (will integrate over angles later)
+muA = muA / np.sqrt(muA[0]**2 + muA[1]**2 + muA[2]**2)
+muA = omega0 * kr(muA, bDb) # each direction has vibrational levels... is this what I want?
+plt.matshow(muA)
+
+# 20240116: project this dipole onto the vibrational states (used to use Ivib instead of bDb)
+# muTot = np.array([muA[i]*kr(muOp, 10*omega0*bDb) for i in range(3)]) ; print('multiplying omega0 by 10 for now')
+muTot = np.array([muA[i]*kr(muOp, bDb) for i in range(3)])  
+matrix_plotter(100*muTot[2],alpha,alpha,title='muTot',frac=0.99); print('multiplying omega0 by 100 for now')
+
+magVecA = np.array([-0.1,0.2,0.3]) # for now set some arbitrary magVec so that np.dot(magVecA,muA) =/= 0
+# magVecB = np.cross(-unitR, muB) 
+
+magA = [magVecA[i]*muOp for i in (0,1,2)] # shape: (3,3,3), muOp = c + cd proportional to x operator
+# magB = [magVecB[i]*muOp for i in (0,1,2)]
+magA = np.array(magA)
+
+
 
 
 
