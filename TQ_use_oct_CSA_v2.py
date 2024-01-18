@@ -237,7 +237,7 @@ def TargetAbsCDSpectra(phiN_thetaN_rollN_shiftN_shearN_R12ang_sigma_chiAbs_chiCD
     
     #################################################
     
-    #%%
+    #%
     
     
 #    muA, muB = ed.dip_vecs(phi, theta)
@@ -393,6 +393,13 @@ def TargetAbsCDSpectra(phiN_thetaN_rollN_shiftN_shearN_R12ang_sigma_chiAbs_chiCD
     
     simAbsSpectra = SimData(closeabsdata, cAbsSpectrum, gamma, sigma, normAbs)
     simCDSpectra = SimData(closecddata, cCDSpectrum, gamma, sigma, normAbs)
+    
+    plt.figure()
+    plt.plot(simAbsSpectra[:,0],simAbsSpectra[:,1]);
+    plt.plot(closeabsdata[:,0],4.5*closeabsdata[:,1])
+    plt.figure()
+    plt.plot(simCDSpectra[:,0],simCDSpectra[:,1]);
+    plt.plot(closecddata[:,0],1*closecddata[:,1])
     
     # Implement internal chi fitting, to allow coarse grid searching for
     # start values:
@@ -553,23 +560,24 @@ def get_c_spectra():
     
     # os.chdir('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230726')
     # os.chdir('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230726')
-    os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230726')
-    # file_name = 'MNS_4uM_20230726_finescan_10nm_min_smoothed.txt'
-    file_name = 'DNTDP_10perc_20230306_finescan_10nm_min_smoothed.txt'
+    # os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230726')
+    file_name = 'MNS_4uM_20230726_finescan_10nm_min_smoothed.txt'
+    # file_name = 'DNTDP_10perc_20230306_finescan_10nm_min_smoothed.txt'
+    file_name = '20230726_MNS_4uM_20230726_finescan.txt'
     
     # os.chdir('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI DNTDP/CD/20230823-juliaCD')
     # os.chdir('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI DNTDP/CD/20230823-juliaCD')
-    os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI DNTDP/CD/20230823-juliaCD')
-    file_name = 'DNTDP_10perc_window5mm_pathlength10mm_QS-accum-BS'
-    # os.chdir('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
-    # os.chdir('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
-    os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
-    file_name = 'MNS_fresh_window5mm_pathlength10mm_QS-accum_smoothed'
-    print('NOTE: using data from julias instrument')
+    # os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI DNTDP/CD/20230823-juliaCD')
+    # file_name = 'DNTDP_10perc_window5mm_pathlength10mm_QS-accum-BS'
+    # # os.chdir('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
+    # # os.chdir('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
+    # os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
+    # file_name = 'MNS_fresh_window5mm_pathlength10mm_QS-accum_smoothed'
+    # print('NOTE: using data from julias instrument')
     
     print('...loading: '+file_name)
-    # data = np.loadtxt(file_name, skiprows=21)
-    data = np.loadtxt(file_name).T
+    data = np.loadtxt(file_name, skiprows=21)
+    # data = np.loadtxt(file_name).T
     
 
     

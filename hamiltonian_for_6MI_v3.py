@@ -559,9 +559,9 @@ muA = np.array([0.1,0.2,0.3]) # what should this be??
 R12 = 1 # what should this be?
 
 
-# muTot = np.array([muA[i]*kr(muOp, Ivib) for i in range(3)]) # from above: muOp = cD + c
+muTot = np.array([muA[i]*kr(muOp, Ivib) for i in range(3)]) # from above: muOp = cD + c
 # matrix_plotter(omega0*bDb, alpha, alpha, title='w/vibrational levels ',frac=0.96)                                                 # 3 because muA is a 3D vector
-muTot = np.array([muA[i]*kr(muOp, omega0*bDb) for i in range(3)]) # from above: muOp = cD + c
+# muTot = np.array([muA[i]*kr(muOp, omega0*bDb) for i in range(3)]) # from above: muOp = cD + c
 # using omega0*bDb to try to make muTot a function of the vibrational level (instead of Ivib where it is independent of vib level)
 # matrix_plotter(muTot[2,:,:], alpha, alpha, title='muTot',frac=0.96)
 
@@ -571,7 +571,7 @@ Rvec = R12*unitR
 
 # magVecA = np.cross(unitR, muA) # this is currently perpendicular to R and mu...
 # 20240116: Need a new way to define magVecA so the dot product between magVecA and muA is nonzero
-magVecA = np.array([-0.1,0.2,0.3]) # for not set some arbitrary magVec so that np.dot(magVecA,muA) =/= 0
+magVecA = np.array([-0.1,-0.2,0.3]) # for not set some arbitrary magVec so that np.dot(magVecA,muA) =/= 0
 # magVecB = np.cross(-unitR, muB) 
 
 magA = [magVecA[i]*muOp for i in (0,1,2)] # shape: (3,3,3), muOp = c + cd proportional to x operator
@@ -600,16 +600,16 @@ mVecA = muA*mumonomer  # electric dipole moment scaled by correct units (mumonom
 # how to define rotational strength for monomer?  hertzberg-teller??
 # look at eqs on 2491 of Nooijen_Int J of Quantum Chemistry_2006.pdf
 # RS = (H*nubar2nu*epsilon0/(4*Hbar)) * dot(np.cross(mVecA, mVecB), Rvec)
-RS = (H*nubar2nu*epsilon0/(4*Hbar)) * dot(magA, mVecA) # this is a 3x3 matrix...
+# RS = (H*nubar2nu*epsilon0/(4*Hbar)) * dot(magA, mVecA) # this is a 3x3 matrix...
 # 20240116: actually a rotational strength for each transition maybe makes sense? 
-# RS = (H*nubar2nu*epsilon0/(4*Hbar)) * dot(magVecA, mVecA) # should be a number? 
+RS = (H*nubar2nu*epsilon0/(4*Hbar)) * dot(magVecA, mVecA) # should be a number? 
 # check constants out front... I am using a different form of Rosenfeld equation than is used for the dimer
 
 Area = RS*epsilon0*nubar2nu/(7.659e-54)
 sigma=100 # inhomogenous linewidth (placeholder for now)
 Height = Area/(sigma * ma.sqrt(2 * Pi) * nubar2nu) / 2 
 
-#%%
+#%
 
 eps, vecs = epsA, vecsA
 
@@ -617,11 +617,16 @@ eps, vecs = epsA, vecsA
 # Ix = dot(muTot[0], vecs)[0] # why do we need the eigenvectors here? What is this doing for us physically?
 # Iy = dot(muTot[1], vecs)[0] # are the eigenvectors setting up the collective modes?
 # Iz = dot(muTot[2], vecs)[0]
-Ix = dot(muTot[0], vecs)#[0]
-Iy = dot(muTot[1], vecs)#[0]
-Iz = dot(muTot[2], vecs)#[0]
+# Ix = dot(muTot[0], vecs)[0]
+# Iy = dot(muTot[1], vecs)[0]
+# Iz = dot(muTot[2], vecs)[0]
+Ix = np.sum(dot(muTot[0], vecs),1) # try summing along rows?
+Iy = np.sum(dot(muTot[1], vecs),1)
+Iz = np.sum(dot(muTot[2], vecs),1)
 SimI = (Ix**2 + Iy**2 + Iz**2)*(2/3)
 # does this still make sense? I guess since we are assuming e||f that maybe this is ok?
+
+plt.matshow(dot(muTot[2], vecs));plt.colorbar()
 
 AbsData = np.transpose([eps, SimI]) # simulated absorption
 
@@ -640,13 +645,16 @@ plt.scatter(AbsData[:,0],AbsData[:,1])
 # plt.plot(cAbsSpectrum[:,0], cAbsSpectrum[:,1])
 plt.plot(simAbs[:,0],simAbs[:,1],'r')
 plt.xlim(10000,max(cAbsSpectrum[:,0]))
-plt.xlim(14000,16000)
+# plt.xlim(14000,16000)
 
 
 # CD intensities
-cdk1 = - dot(muTot[0], vecs)[0] * dot(magOps[0], vecs)[0]
-cdk2 = - dot(muTot[1], vecs)[0] * dot(magOps[1], vecs)[0]
-cdk3 = - dot(muTot[2], vecs)[0] * dot(magOps[2], vecs)[0]
+# cdk1 = - dot(muTot[0], vecs)[0] * dot(magOps[0], vecs)[0]
+# cdk2 = - dot(muTot[1], vecs)[0] * dot(magOps[1], vecs)[0]
+# cdk3 = - dot(muTot[2], vecs)[0] * dot(magOps[2], vecs)[0]
+cdk1 = - np.sum(dot(muTot[0], vecs),1) * np.sum(dot(magOps[0], vecs),1)
+cdk2 = - np.sum(dot(muTot[1], vecs),1) * np.sum(dot(magOps[1], vecs),1)
+cdk3 = - np.sum(dot(muTot[2], vecs),1) * np.sum(dot(magOps[2], vecs),1)
 
 cdTot = Height*(cdk1 + cdk2 + cdk3)
 # np.set_printoptions(threshold=1000)
@@ -676,17 +684,23 @@ plt.matshow(muA)
 
 # 20240116: project this dipole onto the vibrational states (used to use Ivib instead of bDb)
 # muTot = np.array([muA[i]*kr(muOp, 10*omega0*bDb) for i in range(3)]) ; print('multiplying omega0 by 10 for now')
-muTot = np.array([muA[i]*kr(muOp, bDb) for i in range(3)])  
-matrix_plotter(100*muTot[2],alpha,alpha,title='muTot',frac=0.99); print('multiplying omega0 by 100 for now')
+# muTot = np.array([muA[i]*kr(muOp, bDb) for i in range(3)])  
+# matrix_plotter(100*muTot[2],alpha,alpha,title='muTot',frac=0.99); print('multiplying omega0 by 100 for now')
 
 magVecA = np.array([-0.1,0.2,0.3]) # for now set some arbitrary magVec so that np.dot(magVecA,muA) =/= 0
 # magVecB = np.cross(-unitR, muB) 
 
-magA = [magVecA[i]*muOp for i in (0,1,2)] # shape: (3,3,3), muOp = c + cd proportional to x operator
-# magB = [magVecB[i]*muOp for i in (0,1,2)]
-magA = np.array(magA)
+magVecA = magVecA / np.sqrt(magVecA[0]**2 + magVecA[1]**2 + magVecA[2]**2)
+magVecA = omega0 * kr(magVecA,bDb)
+plt.matshow(magVecA)
 
-
+# magA = [magVecA[i]*muOp for i in (0,1,2)] # shape: (3,3,3), muOp = c + cd proportional to x operator
+# # magB = [magVecB[i]*muOp for i in (0,1,2)]
+# magA = np.array(magA)
+constants = 1
+RS = constants * np.dot(muA.T, magVecA)
+matrix_plotter(RS,alpha,alpha,title='Rotational strengths?',frac=0.99)
+plt.colorbar()
 
 
 
