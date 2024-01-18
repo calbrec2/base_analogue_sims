@@ -524,7 +524,7 @@ scan_params = scan_folder[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA_
 stages = scan_params[len(scan_params)-2:]
 scan_type = scan_params[:len(scan_params)-3]
 # =============================================================================
-timing_mode ='t32 = 0'
+timing_mode = 't32 = 0'
 # timing_mode ='t21 = 0'
 # timing_mode ='t43 = 0'
 FT2D_mode = 1
@@ -586,7 +586,7 @@ def FFT_2d(data, t21ax_rt, time_ax, monoC_lam, scan_type): # do the zeropadding 
             else: # => scan_type = 'DQC'
                 Fmono = 2 * (10**7/monoC_lam)
                 ax1 = (Faxis + Fmono) * 1e-3
-        else: # => timing_mode = 't43 = 0'  # only take 2D transform when t32=0
+        elif timing_mode == 't43 = 0':
             if scan_type == 'NRP_RP':
                 Fmono = 0
                 ax2 = (Faxis + Fmono) * 1e-3
@@ -1491,6 +1491,23 @@ theta12 = 0 #30 #36.8
 omega_ge = 14650#14606.9616#10**7/(344*2)
 omega_gep = 15000#15080#15005.2009#10**7/(332*2)
 
+laser_lam = 675#677 #675#10**7/14700 #674 # 675
+laser_fwhm = 30#30#8 #30 #15 #15 #6.37 #50 #30
+mu1_6MI =3#4.49 #2.42
+mu2_6MI =3 # 3#3.5 #3.3
+Gam =85 #99.9971 #2.6e-2
+sigI =65 #35.9397 # 70#48.3 #5e-4
+# delta = 177 #400 #4e-2 #4.55e-2
+monoC_lam = 701.9994 #700
+theta12 = 0 #30 #36.8
+# lam1 = 334 #336
+# lam2 = 344 #346
+# omega_ge = 10**7/(334*2)
+# omega_gep = 10**7/(344*2)
+omega_ge = 14650#14606.9616#10**7/(344*2)
+omega_gep = 15050#15080#15005.2009#10**7/(332*2)
+
+
 # print('omega_ge = '+str(10**7/omega_ge)+' nm')
 # print('omega_gep = '+str(10**7/omega_gep)+' nm')
 # print('omega_ge = '+str(omega_ge)+' cm^(-1)')
@@ -1526,15 +1543,23 @@ omega_gep = 15000#15080#15005.2009#10**7/(332*2)
 # opt_vals = np.double(opt_vals[:len(opt_vals)-2])
 # laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam, theta12, omega_ge, omega_gep = opt_vals
 
+opt_res_path = '/Users/calbrec2/Dropbox/Claire_Dropbox/Data_FPGA/MNS_4uM/2D_scans/20230801/optimized_simulation_wSelecRules_wAlphaFix'
+opt_res_file = '20231101_102817_optimized_params.npy'
+opt_vals = np.load(opt_res_path+'/'+opt_res_file)
+laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, monoC_lam, omega_ge, omega_gep = opt_vals[:len(opt_vals)-2].astype('double')
+scan_folder_nrprp, scan_folder_dqc = opt_vals[len(opt_vals)-2:]
+scan_folder_nrprp = scan_folder_nrprp+'_FFT'
+scan_folder_dqc = scan_folder_dqc+'_FFT'
 #%
 
 # laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam, theta12, lam1, lam2, scan_folder_nrprp, scan_folder_dqc = opt_vals
 #%
 
 scan_params = scan_folder_nrprp[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA_FFT')-1]
+# scan_params = scan_folder_nrprp[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA')-1]
 stages = scan_params[len(scan_params)-2:]
 scan_type = scan_params[:len(scan_params)-3]
-
+#%%
 global timing_mode
 if stages == 'xz':
     timing_mode ='t32 = 0'
@@ -1542,8 +1567,11 @@ elif stages == 'yz':
     timing_mode ='t21 = 0'
 elif stages == 'xy':
     timing_mode ='t43 = 0'
-
-
+# manually set timing mode instead of from data
+# timing_mode ='t32 = 0'
+# timing_mode ='t21 = 0'
+timing_mode ='t43 = 0'
+print(timing_mode)
 # if timing_mode == 't43 = 0':
 #     scan_folder_dqc = '20221202-150919_DQC_xy'
 #     scan_folder_nrprp = '20221202-154305_NRP_RP_xy'
@@ -1557,7 +1585,7 @@ Ntimesteps = int(np.max(np.abs(t21ax))/(t21ax_rt[1] - t21ax_rt[0]))
 t21 = np.linspace(0,116.0805,num=Ntimesteps) # simulate at the retimed timesteps
 
 
-
+#%%
 # t21, t43, cm_DQC, cm_NRP, cm_RP, ax1, ax2, FT_dqc, FT_nrp, FT_rp  = sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam,theta12, lam1, lam2)#, plot_mode=1)
 # t21, t43, cm_DQC, cm_NRP, cm_RP, ax1, ax2, FT_dqc, FT_nrp, FT_rp  = sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam, theta12, omega_ge, omega_gep)
 # t21, t43, cm_DQC, cm_NRP, cm_RP, ax1, ax2, FT_dqc, FT_nrp, FT_rp  = sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, monoC_lam, theta12, omega_ge, omega_gep)
@@ -1625,12 +1653,12 @@ plot2Dspectra(ax1_nrprp, ax2_nrprp, FT_rp, n_cont,ax_lim, title=r'RP($\omega$) w
 # if timing_mode == 't32 = 0':
 weight_func_mode = 0 #1
 save_mode = save_mode
-save_name = 'sim_' + scan_folder_dqc +'_FTdqcReComp'
-plot_comparer(ax1_dqc, ax2_dqc, DQC_exp, FT_dqc, 'DQC',figsize=(16,4),ax_lim = ax_lim ,save_mode = save_mode, file_name = save_name, scan_folder = scan_folder_dqc,weight_func_mode=weight_func_mode)
-save_name = 'sim_' + scan_folder_nrprp +'_FTnrpReComp'
-plot_comparer(ax1_nrprp,ax2_nrprp, NRP_exp, FT_nrp, 'NRP',figsize=(16,4),ax_lim = ax_lim,save_mode = save_mode, file_name = save_name, scan_folder = scan_folder_nrprp,weight_func_mode=weight_func_mode)
-save_name = 'sim_' + scan_folder_nrprp +'_FTrpReComp'
-plot_comparer(ax1_nrprp,ax2_nrprp, RP_exp, FT_rp, 'RP',figsize=(16,4),ax_lim = ax_lim,save_mode = save_mode, file_name = save_name,scan_folder = scan_folder_nrprp,weight_func_mode=weight_func_mode)
+# save_name = 'sim_' + scan_folder_dqc +'_FTdqcReComp'
+# plot_comparer(ax1_dqc, ax2_dqc, DQC_exp, FT_dqc, 'DQC',figsize=(16,4),ax_lim = ax_lim ,save_mode = save_mode, file_name = save_name, scan_folder = scan_folder_dqc,weight_func_mode=weight_func_mode)
+# save_name = 'sim_' + scan_folder_nrprp +'_FTnrpReComp'
+# plot_comparer(ax1_nrprp,ax2_nrprp, NRP_exp, FT_nrp, 'NRP',figsize=(16,4),ax_lim = ax_lim,save_mode = save_mode, file_name = save_name, scan_folder = scan_folder_nrprp,weight_func_mode=weight_func_mode)
+# save_name = 'sim_' + scan_folder_nrprp +'_FTrpReComp'
+# plot_comparer(ax1_nrprp,ax2_nrprp, RP_exp, FT_rp, 'RP',figsize=(16,4),ax_lim = ax_lim,save_mode = save_mode, file_name = save_name,scan_folder = scan_folder_nrprp,weight_func_mode=weight_func_mode)
     
     #%
     # save_mode = save_mode
