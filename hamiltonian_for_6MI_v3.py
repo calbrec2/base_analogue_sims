@@ -87,7 +87,7 @@ def get_c_spectra():
     
     str (e.g. "J89"), str (e.g. "15") -> list of arrays'''
     
-    terminalID = '/Users/calbrec2/'
+    terminalID = '/Users/fulton/'
     
     # os.chdir('/Users/clairealbrecht/Dropbox/MATLAB_programs/claire_programs/from_Lulu/20230726')
     # os.chdir('/Users/calbrecht/Dropbox/MATLAB_programs/claire_programs/from_Lulu/20230726')
@@ -100,7 +100,7 @@ def get_c_spectra():
     from pathlib import Path
 
     home = str(Path.home())
-    path = os.path.join(home,'Documents','github_base','Data','CD_Abs','20230726')
+    path = os.path.join(home,'Documents','Github','base_analogue_sims','Data','CD_Abs','20230726')
     os.chdir(path)
     
     buf_file_name = '20230726_buffer2.txt'
@@ -379,7 +379,7 @@ diag_ham = np.diag(np.real(epsA))
 #  need these for the omega21, oemga_32, omega_43 values
 # =============================================================================
 omegas= np.real(np.subtract.outer(epsA,epsA))
-# matrix_plotter(omegas, alpha, alpha, title=r'Differences between eigenenergies ($cm^{-1}$ x$10^{3}$)',frac=0.8,size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)
+matrix_plotter(omegas, alpha, alpha, title=r'Differences between eigenenergies ($cm^{-1}$ x$10^{3}$)',frac=0.8,size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)
 
 omegas_ges = omegas[nVib:nVib*(nEle-1),0:nVib]
 omegas_efs = omegas[(nEle-1)*nVib:nEle*nVib, nVib:2*nVib]
@@ -396,6 +396,10 @@ alpha_fs = alpha[nVib*(nEle-1):nVib*nEle]
 # matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
 # matrix_plotter(omegas_eeps, alpha_es, alpha_es,title=r"Energies for $\Sigma_{i,j} \omega_{e_ie'_j}$",frac=0.99,label_fontsize=18)
 # matrix_plotter(omegas_gfs, alpha_gs, alpha_fs,title=r'Energies for $\Sigma_{i} \omega_{gf_i}$',frac=0.99,label_fontsize=18)
+#%%
+# Calculating pathways for omega 1, 2 3.
+for i in range [N]:
+    omega1[N] =  
 
 #%%
 plt.figure(figsize=[3,10]);

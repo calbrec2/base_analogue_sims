@@ -786,7 +786,7 @@ def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam
         omega2 = [omega_gf, omega_gfp,   omega_gf,   omega_gf,   omega_gfp,   omega_gfp,    omega_gfp,  omega_gf]        
         omega3 = [omega_ef, omega_epfp,  omega_ef,   omega_epf,  omega_efp,   omega_epfp,   omega_efp,  omega_epf]
 
-        # print('omega1: '+str(omega1[i])+' omega3: '+str(omega3[i]))
+        print('omega1: '+str(omega1[i])+' omega3: '+str(omega3[i]))
         # print('mu1: '+str(mu1[i])+' mu2: '+str(mu2[i])+' mu3: '+str(mu3[i])+' mu4: '+str(mu4[i]))
         # print('mu1*mu2*mu3*mu4: '+str(mu1[i] * mu2[i] * mu3[i] * mu4[i]))
         
