@@ -1568,9 +1568,9 @@ elif stages == 'yz':
 elif stages == 'xy':
     timing_mode ='t43 = 0'
 # manually set timing mode instead of from data
-# timing_mode ='t32 = 0'
+timing_mode ='t32 = 0'
 # timing_mode ='t21 = 0'
-timing_mode ='t43 = 0'
+# timing_mode ='t43 = 0'
 print(timing_mode)
 # if timing_mode == 't43 = 0':
 #     scan_folder_dqc = '20221202-150919_DQC_xy'
@@ -1606,7 +1606,7 @@ n_cont = 15
 # ax_lim = [14,16]
 # ax_lim = [13.75, 15.5]
 ax_lim = [14, 15.5]
-ax_lim = [13.75, 15.5]
+# ax_lim = [13.75, 15.5]
 # ax_lim = [13, 16]
 # ax_lim = [13.6, 15.75]
 
@@ -1654,11 +1654,11 @@ plot2Dspectra(ax1_nrprp, ax2_nrprp, FT_rp, n_cont,ax_lim, title=r'RP($\omega$) w
 weight_func_mode = 0 #1
 save_mode = save_mode
 # save_name = 'sim_' + scan_folder_dqc +'_FTdqcReComp'
-# plot_comparer(ax1_dqc, ax2_dqc, DQC_exp, FT_dqc, 'DQC',figsize=(16,4),ax_lim = ax_lim ,save_mode = save_mode, file_name = save_name, scan_folder = scan_folder_dqc,weight_func_mode=weight_func_mode)
+plot_comparer(ax1_dqc, ax2_dqc, DQC_exp, FT_dqc, 'DQC',figsize=(16,4),ax_lim = ax_lim ,save_mode = save_mode, file_name = save_name, scan_folder = scan_folder_dqc,weight_func_mode=weight_func_mode)
 # save_name = 'sim_' + scan_folder_nrprp +'_FTnrpReComp'
-# plot_comparer(ax1_nrprp,ax2_nrprp, NRP_exp, FT_nrp, 'NRP',figsize=(16,4),ax_lim = ax_lim,save_mode = save_mode, file_name = save_name, scan_folder = scan_folder_nrprp,weight_func_mode=weight_func_mode)
+plot_comparer(ax1_nrprp,ax2_nrprp, NRP_exp, FT_nrp, 'NRP',figsize=(16,4),ax_lim = ax_lim,save_mode = save_mode, file_name = save_name, scan_folder = scan_folder_nrprp,weight_func_mode=weight_func_mode)
 # save_name = 'sim_' + scan_folder_nrprp +'_FTrpReComp'
-# plot_comparer(ax1_nrprp,ax2_nrprp, RP_exp, FT_rp, 'RP',figsize=(16,4),ax_lim = ax_lim,save_mode = save_mode, file_name = save_name,scan_folder = scan_folder_nrprp,weight_func_mode=weight_func_mode)
+plot_comparer(ax1_nrprp,ax2_nrprp, RP_exp, FT_rp, 'RP',figsize=(16,4),ax_lim = ax_lim,save_mode = save_mode, file_name = save_name,scan_folder = scan_folder_nrprp,weight_func_mode=weight_func_mode)
     
     #%
     # save_mode = save_mode

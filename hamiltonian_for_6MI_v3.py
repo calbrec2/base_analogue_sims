@@ -237,12 +237,12 @@ def SimData(stickdata, data, gamma, sigma, norm):
         for stick in stickdata:
             # print(stick)
             simval += stick[1]/norm * \
-                PseudoVoigtDistribution(point, gamma, sigma, stick[0])
-                # PseudoVoigtDistribution(point[0], gamma, sigma, stick[0])
+                PseudoVoigtDistribution(point[0], gamma, sigma, stick[0])
+                # PseudoVoigtDistribution(point, gamma, sigma, stick[0])
                 #CauchyDist(point[0],stick[0],gamma)
                 #NormalDist(point[0],stick[0], sigma)
-        # output.append([point[0], simval])
-        output.append([point, simval])
+        output.append([point[0], simval])
+        # output.append([point, simval])
     return np.array(output)
 
 ###################################################
@@ -329,8 +329,6 @@ cDc = sp.dot(cD,c)  # electronic number operator
 bDb = sp.dot(bD,b)  # vibrational number operator
 
 #################################################
-
-
 
 #%
 # =============================================================================
@@ -548,45 +546,144 @@ ax.set_ylabel(r'$\omega_{gf}$',fontsize=14)
 
 
 
+
+
+
+
+
+
+
+
+
+
 # =============================================================================
-# %% Simulate absorption & CD spectra from these energies
 # =============================================================================
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# %% 
+
+# =============================================================================
+# Simulate absorption & CD spectra from these energies
+# =============================================================================
+# this stuff is defined above too but I want to see it all in one place
+################## OPERATORS ###################
+# electronic raising and lowering operators: c, cD
+c = sp.zeros((nEle,nEle)) # need to be nxn where n is the number of electronic states
+for i in range(nEle-1):
+    c[i,i+1] = sp.sqrt(i+1)  
+cD = c.T    
+
+muOp = cD + c # proportional to position operator (x = sqrt(hbar/ 2m omega) (c + cD))
+
+# Vibrational Modes                                #***#   6
+nVib = int(nVib)
+# electronic raising and lowering operators: b, bD
+b = sp.zeros((nVib,nVib)) # need to be mxm where m is the number of vibrational states
+for i in range(nVib-1):
+    b[i,i+1] = sp.sqrt(i+1)  # vibrational raising and lowering ops
+bD = b.T
+# identity ops
+Iel = sp.eye(nEle)  # g, e, fg,        ( from selection rules model: e1, f0 )
+Ivib = sp.eye(nVib) # 0, 1             ( from selection rules model: e3, f2 )
+# number ops (need to be same size and corresponding identity ops)
+cDc = sp.dot(cD,c)  # electronic number operator
+bDb = sp.dot(bD,b)  # vibrational number operator
+
+
+# 20240122 CSA: do I need one photon resonant ladder operators?
+c_uv = sp.zeros((nEle,nEle))
+c_uv[0,nEle-1] = 1
+cD_uv = c_uv.T
+cDc_uv = sp.dot(cD_uv,c_uv)
+muOp_uv = cD_uv + c_uv
+
+#################################################
+
+#%
+# =============================================================================
+# Generate Hamiltonian for monomer A (see eq 17 from Kringel et al)
+# =============================================================================
+h1A = omega_ge * kr(cDc, Ivib) # electronic levels
+h4A = omega0 * kr(Iel, bDb)  # vibrational levels
+h6A = omega0 * kr(cDc, lam * (bD + b) + (lam**2)*Ivib) # coupling between electronic and vibrational
+hamA = h1A + h4A + h6A
+# matrix_plotter(hamA, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)#14)
+# matrix_plotter(h6A, alpha, alpha, title=r'Hamiltonian of monomer $(cm^{-1} x10^{3})$',size=nEle*nVib,title_fontsize=20,label_fontsize=16,fontsize=22)
+
+
+# Diagonalize Hamiltonian
+epsA, vecsA = la.eig(hamA)
+# sort eigenvalues and vectors so energies are increasing
+idxA = epsA.argsort()[::-1]   
+epsA = epsA[idxA]
+vecsA = vecsA[:,idxA]
+#print(vecs)           # debugging
+epsA = np.flip(epsA, 0)
+vecsA = np.fliplr(vecsA)
+
+
 # =============================================================================
 # # How to calculate rotational strength for monomer??
 # =============================================================================
 # define dipole vector for monomer
-muA = np.array([0.1,0.2,0.3]) # what should this be??
-R12 = 1 # what should this be?
+muA = np.array([-0.1,0.2,-0.2]) # what should this be??
+muA /= np.linalg.norm(muA)
+# R12 = 1 # what should this be?
 
 
-muTot = np.array([muA[i]*kr(muOp, Ivib) for i in range(3)]) # from above: muOp = cD + c
+muTot = np.array([muA[i]*kr(muOp, Ivib) for i in range(3)]) # from above: muOp = cD + c ~ x operator... 
+                                                            # is this effectively the dipole operator projected onto the orientation of mu?
+                                                            # so is this what we will change for the HT coupling?
 # matrix_plotter(omega0*bDb, alpha, alpha, title='w/vibrational levels ',frac=0.96)                                                 # 3 because muA is a 3D vector
 # muTot = np.array([muA[i]*kr(muOp, omega0*bDb) for i in range(3)]) # from above: muOp = cD + c
 # using omega0*bDb to try to make muTot a function of the vibrational level (instead of Ivib where it is independent of vib level)
 # matrix_plotter(muTot[2,:,:], alpha, alpha, title='muTot',frac=0.96)
 
+# Use 1PA operators (uv) for muTot
+muTot_uv = np.array([muA[i]*kr(muOp_uv,Ivib) for i in range(3)])
+
 # I don't think I'll need R or R12 for the monomer case, but leaving it here for now until I know for sure
-unitR = np.array([0, 0, 1])
-Rvec = R12*unitR
+# unitR = np.array([0, 0, 1])
+# Rvec = R12*unitR
 
 # magVecA = np.cross(unitR, muA) # this is currently perpendicular to R and mu...
 # 20240116: Need a new way to define magVecA so the dot product between magVecA and muA is nonzero
-magVecA = np.array([-0.1,-0.2,0.3]) # for not set some arbitrary magVec so that np.dot(magVecA,muA) =/= 0
-# magVecB = np.cross(-unitR, muB) 
+theta = np.pi/2  # changing sign of this switches CD from (+) -> (-)
+phi = np.pi/2 
+magVecA = np.array([np.sin(theta)*np.cos(phi),np.sin(theta)*np.sin(phi),np.cos(theta)]) # for not set some arbitrary magVec so that np.dot(magVecA,muA) =/= 0
+magVecA = np.cross(magVecA, muA)
+# magVecA = np.array([0.3,0.2,0.2])
+magVecA /= np.linalg.norm(magVecA)
+# think about these as angles wrt muA?
+# by just writing in the magVecA we have a nonzero CD without including any HT coupling
 
-magA = [magVecA[i]*muOp for i in (0,1,2)] # shape: (3,3,3), muOp = c + cd proportional to x operator
-# magB = [magVecB[i]*muOp for i in (0,1,2)]
-magA = np.array(magA)
+# these are constructed with the virtual state ladder operators in muOp
+# magA = [magVecA[i]*muOp for i in (0,1,2)] # shape: (3,3,3), muOp = c + cd proportional to x operator
+# # magB = [magVecB[i]*muOp for i in (0,1,2)]
+# magA = np.array(magA)
 
-# magB = magA # making monomers identical!
+
+# Write 1PA operators for magnetic dipole
+magA_uv = [magVecA[i]*muOp_uv for i in (0,1,2)]
+
+# 20240122 CSA: using operators specific to 1PA
+muTot = muTot_uv # use 1PA operators (uv)
+magA = magA_uv # use 1PA operators (uv)
+print('!!!using the UV operator for mu and mag!!!')
 
 # how to make the vibrational levels optically active?
-# op1 = kr(magA[0], Ivib) + kr(Iel,Ivib) # CSA - do i need the second term?
-# op2 = kr(magA[1], Ivib) + kr(Iel,Ivib)
-# op3 = kr(magA[2], Ivib) + kr(Iel,Ivib)
-op1 = kr(magA[0], omega0*bDb) + kr(Iel,Ivib)  #* # 20240116: try using bDb*omega0 instead of identity operator to make the operator depend on vibrational level
-op2 = kr(magA[1], omega0*bDb) + kr(Iel,Ivib) #omega0*
-op3 = kr(magA[2], omega0*bDb) + kr(Iel,Ivib) #omega0*
+op1 = kr(magA[0], Ivib) + kr(Iel,Ivib) # CSA - is this right? do i need the second term?
+op2 = kr(magA[1], Ivib) + kr(Iel,Ivib)
+op3 = kr(magA[2], Ivib) + kr(Iel,Ivib)
+# op1 = kr(magA[0], omega0*bDb) + kr(Iel,Ivib)  #* # 20240116: try using bDb*omega0 instead of identity operator to make the operator depend on vibrational level
+# op2 = kr(magA[1], omega0*bDb) + kr(Iel,Ivib) #omega0*
+# op3 = kr(magA[2], omega0*bDb) + kr(Iel,Ivib) #omega0*
 # op1 = kr4(magA[0], Iel, Ivib, Ivib) + kr4(Iel, magB[0], Ivib, Ivib)
 # op2 = kr4(magA[1], Iel, Ivib, Ivib) + kr4(Iel, magB[1], Ivib, Ivib)
 # op3 = kr4(magA[2], Iel, Ivib, Ivib) + kr4(Iel, magB[2], Ivib, Ivib)
@@ -606,73 +703,121 @@ RS = (H*nubar2nu*epsilon0/(4*Hbar)) * dot(magVecA, mVecA) # should be a number?
 # check constants out front... I am using a different form of Rosenfeld equation than is used for the dimer
 
 Area = RS*epsilon0*nubar2nu/(7.659e-54)
-sigma=100 # inhomogenous linewidth (placeholder for now)
-Height = Area/(sigma * ma.sqrt(2 * Pi) * nubar2nu) / 2 
+sigma=200 # inhomogenous linewidth (placeholder for now)
+Height = 1 #Area/(sigma * ma.sqrt(2 * Pi) * nubar2nu) / 2 
 
 #%
 
 eps, vecs = epsA, vecsA
 
 # absorbtion intensities
-# Ix = dot(muTot[0], vecs)[0] # why do we need the eigenvectors here? What is this doing for us physically?
-# Iy = dot(muTot[1], vecs)[0] # are the eigenvectors setting up the collective modes?
-# Iz = dot(muTot[2], vecs)[0]
-# Ix = dot(muTot[0], vecs)[0]
-# Iy = dot(muTot[1], vecs)[0]
-# Iz = dot(muTot[2], vecs)[0]
-Ix = np.sum(dot(muTot[0], vecs),1) # try summing along rows?
-Iy = np.sum(dot(muTot[1], vecs),1)
-Iz = np.sum(dot(muTot[2], vecs),1)
-SimI = (Ix**2 + Iy**2 + Iz**2)*(2/3)
+# Ix = dot(muTot[0], vecs)[0] # I think the eigenvectors are setting up the collective modes 
+# Iy = dot(muTot[1], vecs)[0] # select 0th row so we overlap <n|0> the nth vibrational state with the ground vibrational (first row)
+# Iz = dot(muTot[2], vecs)[0] # 
+# SimI = (Ix**2 + Iy**2 + Iz**2)*(2/3)
 # does this still make sense? I guess since we are assuming e||f that maybe this is ok?
 
-plt.matshow(dot(muTot[2], vecs));plt.colorbar()
+# =============================================================================
+# How to adapt this for the HT case?
+# =============================================================================
+# Does it make sense to use the vecs from the Hamiltonian constructed from the virtual state operators?
+# or should I have a UV Hamiltonian and a virtual state Hamiltonian? 
+# will we be able to find a consistent set of params if we have two different Hamiltonians?
+
+# 20240123 try setting up an HT term...
+HTfac = 1 # slope
+HTshift = 0.2 # y-offset
+HTarr = bDb # start with vibrational energy levels
+np.fill_diagonal(HTarr, HTfac * np.diag(HTarr) + HTshift) # make energies scale linearly with HT params
+muTot_uv_k = np.array([muA[i]*kr(muOp_uv,HTarr) for i in range(3)]) # make a muTot_uv_k for uv absorption as a function of the kth vibrational state
+#term labels:  ** FC  **                          ** FC/HT **                                     ** HT **
+Ix = (dot(muTot[0], vecs)[0])**2 + 2*dot(muTot[0], vecs)[0] * dot(muTot_uv_k[0],vecs)[0] + (dot(muTot_uv_k[0],vecs)[0])**2
+Iy = (dot(muTot[1], vecs)[0])**2 + 2*dot(muTot[1], vecs)[0] * dot(muTot_uv_k[1],vecs)[0] + (dot(muTot_uv_k[1],vecs)[0])**2
+Iz = (dot(muTot[2], vecs)[0])**2 + 2*dot(muTot[2], vecs)[0] * dot(muTot_uv_k[2],vecs)[0] + (dot(muTot_uv_k[0],vecs)[0])**2
+SimI = (Ix + Iy + Iz)*(2/3)
+# this isn't doing much to the Abs... just slight shifts to the overall peak intensities....
+# this might be okay... we see the peaks better in the CD anyway.
 
 AbsData = np.transpose([eps, SimI]) # simulated absorption
 
 # extend range of data to cover virtual states for the time being
-xvals2append = np.linspace(0,np.min(cAbsSpectrum[:,0]),num=int(np.ceil(np.min(cAbsSpectrum[:,0])/(cAbsSpectrum[1,0]-cAbsSpectrum[0,0]))))
-zeros2append = np.zeros(xvals2append.shape)
-cAbs2append = np.vstack([xvals2append, zeros2append]).T
-cAbsSpectrum = np.vstack([cAbs2append, cAbsSpectrum])
+# xvals2append = np.linspace(0,np.min(cAbsSpectrum[:,0]),num=int(np.ceil(np.min(cAbsSpectrum[:,0])/(cAbsSpectrum[1,0]-cAbsSpectrum[0,0]))))
+# zeros2append = np.zeros(xvals2append.shape)
+# cAbs2append = np.vstack([xvals2append, zeros2append]).T
+# cAbsSpectrum = np.vstack([cAbs2append, cAbsSpectrum])
 
-gamma=40 # homogeneous linewidth (placeholder for now)
+gamma=200 # homogeneous linewidth (placeholder for now)
 normAbs = PseudoVoigtDistribution(epsilon0, gamma, sigma, epsilon0)
-simAbs = SimData(AbsData, cAbsSpectrum, gamma, sigma, normAbs*1.1)
-
-plt.figure()
-plt.scatter(AbsData[:,0],AbsData[:,1])
-# plt.plot(cAbsSpectrum[:,0], cAbsSpectrum[:,1])
-plt.plot(simAbs[:,0],simAbs[:,1],'r')
-plt.xlim(10000,max(cAbsSpectrum[:,0]))
-# plt.xlim(14000,16000)
-
+simAbs = SimData(AbsData, cAbsSpectrum, gamma, sigma, normAbs) # *1.1
+simAbs[:,1] = (simAbs[:,1]/np.max(simAbs[:,1])) * np.max(np.abs(AbsData[:,1]))
+# normalizing abs for now... sort out units later
 
 # CD intensities
 # cdk1 = - dot(muTot[0], vecs)[0] * dot(magOps[0], vecs)[0]
 # cdk2 = - dot(muTot[1], vecs)[0] * dot(magOps[1], vecs)[0]
 # cdk3 = - dot(muTot[2], vecs)[0] * dot(magOps[2], vecs)[0]
-cdk1 = - np.sum(dot(muTot[0], vecs),1) * np.sum(dot(magOps[0], vecs),1)
-cdk2 = - np.sum(dot(muTot[1], vecs),1) * np.sum(dot(magOps[1], vecs),1)
-cdk3 = - np.sum(dot(muTot[2], vecs),1) * np.sum(dot(magOps[2], vecs),1)
+
+# 20240123 try to incorporate HT terms in CD calc... similar to above in abs somehow....
+#term labels:  ** FC  **                                    **?????? FC/HT ??????** 
+cdk1 = - dot(muTot[0], vecs)[0] * dot(magOps[0], vecs)[0] - dot(muTot_uv_k[0], vecs)[0] * dot(magOps[0], vecs)[0]
+cdk2 = - dot(muTot[1], vecs)[0] * dot(magOps[1], vecs)[0] - dot(muTot_uv_k[0], vecs)[0] * dot(magOps[0], vecs)[0]
+cdk3 = - dot(muTot[2], vecs)[0] * dot(magOps[2], vecs)[0] - dot(muTot_uv_k[0], vecs)[0] * dot(magOps[0], vecs)[0]
 
 cdTot = Height*(cdk1 + cdk2 + cdk3)
 # np.set_printoptions(threshold=1000)
 
 CDdata = np.transpose([eps, cdTot])# simulated CD
+print(CDdata)
+# xvals2append = np.linspace(0,np.min(cCDSpectrum[:,0]),num=int(np.ceil(np.min(cCDSpectrum[:,0])/(cCDSpectrum[1,0]-cCDSpectrum[0,0]))))
+# zeros2append = np.zeros(xvals2append.shape)
+# cCD2append = np.vstack([xvals2append, zeros2append]).T
+# cCDSpectrum = np.vstack([cCD2append, cCDSpectrum])
 
-xvals2append = np.linspace(0,np.min(cCDSpectrum[:,0]),num=int(np.ceil(np.min(cCDSpectrum[:,0])/(cCDSpectrum[1,0]-cCDSpectrum[0,0]))))
-zeros2append = np.zeros(xvals2append.shape)
-cCD2append = np.vstack([xvals2append, zeros2append]).T
-cCDSpectrum = np.vstack([cCD2append, cCDSpectrum])
+simCD = SimData(CDdata, cCDSpectrum, gamma, sigma, normAbs)#*1e40)
+simCD[:,1] = (simCD[:,1]/np.max(np.abs(simCD[:,1]))) * np.max(np.abs(CDdata[:,1]))
+# normalizing CD for now... sort out units later
 
-simCD = SimData(CDdata, cCDSpectrum, gamma, sigma, normAbs)
+# plot CD and Abs
+fig,ax = plt.subplots(2,1,figsize=[10,8],sharex=True)
+ax[0].scatter(AbsData[:,0],AbsData[:,1])
+ax[0].plot(simAbs[:,0],simAbs[:,1],'r')
+ax[0].set_title('Abs',fontsize=14)
+# plt.set_xlim(10000,max(cAbsSpectrum[:,0]))
+ax[0].set_xlim(27500,32000)
 
-plt.figure()
-plt.scatter(CDdata[:,0],CDdata[:,1])
-# plt.plot(cCDSpectrum[:,0], cCDSpectrum[:,1])
-plt.plot(simCD[:,0],simCD[:,1],'r')
-plt.xlim(10000,max(cCDSpectrum[:,0]))
+ax[1].scatter(CDdata[:,0],CDdata[:,1])#*1e-38 )
+ax[1].plot(simCD[:,0],simCD[:,1],'g')
+# ax[1].plot(simCD[:,0],(simCD[:,1]/np.max(np.abs(simCD[:,1])))*np.max(np.abs(CDdata[:,1])),'g')
+ax[1].set_title('CD',fontsize=14)
+ax[1].set_xlabel(r'Energy $(cm^{-1})$',fontsize=14)
+# ax[1].plot(simCD[:,0],(simCD[:,1] + 1.2*(simCD[0,1])) )#*1e-40,'g')
+# ax[1].set_xlim(10000,max(cCDSpectrum[:,0]))
+# ax[1].set_xlim(27500,32000)
+ax[1].set_ylim(-0.1,0.1)
+
+
+
+
+
+
+
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# =============================================================================
+# =============================================================================
+#
+
+
+
+
+
+
 
 #%%
 
