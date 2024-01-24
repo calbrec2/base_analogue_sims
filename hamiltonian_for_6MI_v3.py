@@ -582,7 +582,7 @@ cD = c.T
 muOp = cD + c # proportional to position operator (x = sqrt(hbar/ 2m omega) (c + cD))
 
 # Vibrational Modes                                #***#   6
-nVib = int(nVib)
+nVib = int(10)#nVib)
 # electronic raising and lowering operators: b, bD
 b = sp.zeros((nVib,nVib)) # need to be mxm where m is the number of vibrational states
 for i in range(nVib-1):
@@ -654,7 +654,7 @@ muTot_uv = np.array([muA[i]*kr(muOp_uv,Ivib) for i in range(3)])
 
 # magVecA = np.cross(unitR, muA) # this is currently perpendicular to R and mu...
 # 20240116: Need a new way to define magVecA so the dot product between magVecA and muA is nonzero
-theta = np.pi/2  # changing sign of this switches CD from (+) -> (-)
+theta = -np.pi/2  # changing sign of this switches CD from (+) -> (-)
 phi = np.pi/2 
 magVecA = np.array([np.sin(theta)*np.cos(phi),np.sin(theta)*np.sin(phi),np.cos(theta)]) # for not set some arbitrary magVec so that np.dot(magVecA,muA) =/= 0
 magVecA = np.cross(magVecA, muA)
@@ -724,8 +724,8 @@ eps, vecs = epsA, vecsA
 # or should I have a UV Hamiltonian and a virtual state Hamiltonian? 
 # will we be able to find a consistent set of params if we have two different Hamiltonians?
 
-# 20240123 try setting up an HT term...
-HTfac = 1 # slope
+# 20240123 try setting up an HT term... NOT SURE IF THIS IS CORRECT!!!!!!!
+HTfac = 0.5 # slope
 HTshift = 0.2 # y-offset
 HTarr = bDb # start with vibrational energy levels
 np.fill_diagonal(HTarr, HTfac * np.diag(HTarr) + HTshift) # make energies scale linearly with HT params
@@ -746,7 +746,7 @@ AbsData = np.transpose([eps, SimI]) # simulated absorption
 # cAbs2append = np.vstack([xvals2append, zeros2append]).T
 # cAbsSpectrum = np.vstack([cAbs2append, cAbsSpectrum])
 
-gamma=200 # homogeneous linewidth (placeholder for now)
+gamma=100 # homogeneous linewidth (placeholder for now)
 normAbs = PseudoVoigtDistribution(epsilon0, gamma, sigma, epsilon0)
 simAbs = SimData(AbsData, cAbsSpectrum, gamma, sigma, normAbs) # *1.1
 simAbs[:,1] = (simAbs[:,1]/np.max(simAbs[:,1])) * np.max(np.abs(AbsData[:,1]))
@@ -773,18 +773,20 @@ print(CDdata)
 # cCD2append = np.vstack([xvals2append, zeros2append]).T
 # cCDSpectrum = np.vstack([cCD2append, cCDSpectrum])
 
-simCD = SimData(CDdata, cCDSpectrum, gamma, sigma, normAbs)#*1e40)
+simCD = SimData(CDdata, cCDSpectrum, gamma/1.5, sigma/1.5, normAbs)#*1e40)
 simCD[:,1] = (simCD[:,1]/np.max(np.abs(simCD[:,1]))) * np.max(np.abs(CDdata[:,1]))
 # normalizing CD for now... sort out units later
 
 # plot CD and Abs
 fig,ax = plt.subplots(2,1,figsize=[10,8],sharex=True)
+ax[0].plot(cAbsSpectrum[:,0], (cAbsSpectrum[:,1]/np.max(cAbsSpectrum[:,1]))*np.max(AbsData[:,1]),'k')
 ax[0].scatter(AbsData[:,0],AbsData[:,1])
 ax[0].plot(simAbs[:,0],simAbs[:,1],'r')
 ax[0].set_title('Abs',fontsize=14)
 # plt.set_xlim(10000,max(cAbsSpectrum[:,0]))
 ax[0].set_xlim(27500,32000)
 
+ax[1].plot(cCDSpectrum[:,0],(cCDSpectrum[:,1]/np.max(np.abs(cCDSpectrum[:,1]))) * np.max(np.abs(CDdata[:,1])),'k')
 ax[1].scatter(CDdata[:,0],CDdata[:,1])#*1e-38 )
 ax[1].plot(simCD[:,0],simCD[:,1],'g')
 # ax[1].plot(simCD[:,0],(simCD[:,1]/np.max(np.abs(simCD[:,1])))*np.max(np.abs(CDdata[:,1])),'g')
@@ -793,7 +795,7 @@ ax[1].set_xlabel(r'Energy $(cm^{-1})$',fontsize=14)
 # ax[1].plot(simCD[:,0],(simCD[:,1] + 1.2*(simCD[0,1])) )#*1e-40,'g')
 # ax[1].set_xlim(10000,max(cCDSpectrum[:,0]))
 # ax[1].set_xlim(27500,32000)
-ax[1].set_ylim(-0.1,0.1)
+# ax[1].set_ylim(-0.1,0.1)
 
 
 
