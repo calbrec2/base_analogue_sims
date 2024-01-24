@@ -285,7 +285,7 @@ omega_ge=epsilon0/2 # virtual state energy spacing
 # =============================================================================
 # set number of electronic and vibrational states in hamiltonian
 # =============================================================================
-nVib = 4
+nVib = 2
 nEle = 3 # CSA - changed this so that we can vary the # of electronic states
 # ...assuming 0=ground state, 1=virtual state, 2=real excited state
 # =============================================================================
@@ -392,14 +392,15 @@ alpha_fs = alpha[nVib*(nEle-1):nVib*nEle]
 
 
 # look at sub matrices for transitions
-# matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
+matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
 # matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
 # matrix_plotter(omegas_eeps, alpha_es, alpha_es,title=r"Energies for $\Sigma_{i,j} \omega_{e_ie'_j}$",frac=0.99,label_fontsize=18)
 # matrix_plotter(omegas_gfs, alpha_gs, alpha_fs,title=r'Energies for $\Sigma_{i} \omega_{gf_i}$',frac=0.99,label_fontsize=18)
 #%%
 # Calculating pathways for omega 1, 2 3.
-for i in range [N]:
-    omega1[N] =  
+omega1 = []
+for i in range(nterms):
+    if 
 
 #%%
 plt.figure(figsize=[3,10]);
