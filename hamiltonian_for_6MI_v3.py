@@ -197,7 +197,7 @@ make_plots = True
 
 
 ################# LINEAR ALGEBRA ################
-def kr(a,b): return sp.kron(a,b)
+def kr(a,b): return np.kron(a,b)
 def kr4(a,b,c,d): return kr(kr(kr(a,b),c),d)
 def dot(a,b): return np.dot(a,b)    
 
@@ -303,9 +303,9 @@ J = 0
 
 ################## OPERATORS ###################
 # electronic raising and lowering operators: c, cD
-c = sp.zeros((nEle,nEle)) # need to be nxn where n is the number of electronic states
+c = np.zeros((nEle,nEle)) # need to be nxn where n is the number of electronic states
 for i in range(nEle-1):
-    c[i,i+1] = sp.sqrt(i+1)  
+    c[i,i+1] = np.sqrt(i+1)  
 cD = c.T    
 
 muOp = cD + c # proportional to position operator (x = sqrt(hbar/ 2m omega) (c + cD))
@@ -315,18 +315,18 @@ nVib = int(nVib)
 # print('...using '+str(nVib)+' vibrational modes')
 
 # electronic raising and lowering operators: b, bD
-b = sp.zeros((nVib,nVib)) # need to be mxm where m is the number of vibrational states
+b = np.zeros((nVib,nVib)) # need to be mxm where m is the number of vibrational states
 for i in range(nVib-1):
-    b[i,i+1] = sp.sqrt(i+1)  # vibrational raising and lowering ops
+    b[i,i+1] = np.sqrt(i+1)  # vibrational raising and lowering ops
 bD = b.T
 
 # identity ops
-Iel = sp.eye(nEle)  # g, e, fg,        ( from selection rules model: e1, f0 )
-Ivib = sp.eye(nVib) # 0, 1             ( from selection rules model: e3, f2 )
+Iel = np.eye(nEle)  # g, e, fg,        ( from selection rules model: e1, f0 )
+Ivib = np.eye(nVib) # 0, 1             ( from selection rules model: e3, f2 )
 
 # number ops (need to be same size and corresponding identity ops)
-cDc = sp.dot(cD,c)  # electronic number operator
-bDb = sp.dot(bD,b)  # vibrational number operator
+cDc = np.dot(cD,c)  # electronic number operator
+bDb = np.dot(bD,b)  # vibrational number operator
 
 #################################################
 
