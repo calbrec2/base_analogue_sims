@@ -106,26 +106,13 @@ def get_c_spectra():
     buf_file_name = '20230726_buffer2.txt'
     buf_data = np.loadtxt(buf_file_name, skiprows=21)
     file_name = '20230726_MNS_4uM_20230726_finescan.txt'
+    # file_name = 'DNTDP_10perc_20230306_finescan_10nm_min.txt'
+    # file_name = 'MNS_4uM_20230726_finescan_10nm_min_smoothed.txt'
+    # file_name = 'DNTDP_10perc_20230306_finescan_10nm_min_smoothed.txt'   
     
-    
-    # # os.chdir('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230726')
-    # # os.chdir('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230726')
-    # # os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230726')
-    # # file_name = 'MNS_4uM_20230726_finescan_10nm_min_smoothed.txt'
-    # file_name = 'DNTDP_10perc_20230306_finescan_10nm_min_smoothed.txt'
-    
-    # # os.chdir('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI DNTDP/CD/20230823-juliaCD')
-    # # os.chdir('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI DNTDP/CD/20230823-juliaCD')
-    # os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI DNTDP/CD/20230823-juliaCD')
-    # file_name = 'DNTDP_10perc_window5mm_pathlength10mm_QS-accum-BS'
-    # # os.chdir('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
-    # # os.chdir('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
-    # os.chdir(terminalID+'Dropbox/Claire_Dropbox/Data/6MI MNS/CD/20230823-juliaCD')
-    # file_name = 'MNS_fresh_window5mm_pathlength10mm_QS-accum_smoothed'
-    # print('NOTE: using data from julias instrument')
     
     files = os.listdir()
-    file_name = files[1]
+    # file_name = files[1]
     print('...loading: '+file_name)
     data = np.loadtxt(file_name, skiprows=21)
     # data = np.loadtxt(file_name).T
@@ -133,12 +120,10 @@ def get_c_spectra():
 
     
     wavelengths = data[:,0]
-    # CDSpec = data[:,1] - buf_data[:,1]
-    # HT = data[:,2]
-    # AbsSpec = data[:,3] - buf_data[:,3]
-    # for smoothed data files:
-    CDSpec = data[:,2] #- buf_data[:,2]
-    AbsSpec = data[:,1] #- buf_data[:,1]
+    extra_buf_scaling = 1.18 # for MNS... need different for DNTDP
+    # extra_buf_scaling = 1.1 # for DNTDP
+    CDSpec = data[:,1] - extra_buf_scaling*buf_data[:,1]
+    AbsSpec = data[:,3] - extra_buf_scaling*buf_data[:,3]
     
     CDSpec = CDSpec - np.mean(CDSpec[:10])
     AbsSpec = AbsSpec - np.mean(AbsSpec[:10])
@@ -149,16 +134,28 @@ def get_c_spectra():
         # return np.convolve(x, np.ones(w), 'valid') / w
         return np.convolve(x, np.ones(w)/w, 'valid')
     
-    # window=12
-    # print('!! Smoothing over '+str(window)+' data points!!')
-    # CDSpec = np.array(moving_average(CDSpec, window))
-    # AbsSpec = np.array(moving_average(AbsSpec,window))
-    # wavelengths = np.array(moving_average(wavelengths,window))
+    window = 12
+    print('!! Smoothing over '+str(window)+' data points!!')
+    CDSpec = np.array(moving_average(CDSpec, window))
+    AbsSpec = np.array(moving_average(AbsSpec,window))
+    wavelengths = np.array(moving_average(wavelengths,window))
 
     AbsSpec = np.vstack([10**7/wavelengths, AbsSpec]).T
     CDSpec = np.vstack([10**7/wavelengths, CDSpec]).T
     
+    low = 25000
+    high = 36000#2500 
+    
     return [Closeup(AbsSpec, low, high), Closeup(CDSpec, low, high)]
+
+
+cAbsSpectrum, cCDSpectrum = get_c_spectra()
+fig,ax = plt.subplots(2,1,figsize=[10,8],sharex=True)
+ax[0].plot(cAbsSpectrum[:,0],cAbsSpectrum[:,1])
+ax[0].axhline(0,color='k',linestyle='--')
+ax[0].set_xlim(25500,36000)
+ax[1].plot(cCDSpectrum[:,0],cCDSpectrum[:,1])
+ax[1].axhline(0,color='k',linestyle='--')
 
 #%%
 ########### VARIABLE DEFINITIONS ##############
@@ -225,7 +222,7 @@ def PseudoVoigtDistribution(x, gamma, sigma, epsilon):
     eta = eta * (1.36603 - 0.47719*eta + 0.11116*eta**2)
     return eta * CauchyDist(x, epsilon, g) + (1 - eta) * NormalDist(0, epsilon, g)
 
-cAbsSpectrum, cCDSpectrum = get_c_spectra()
+
     
 def SimData(stickdata, data, gamma, sigma, norm):
     '''simulates a broadened spectra from a stick spectra
@@ -725,7 +722,7 @@ eps, vecs = epsA, vecsA
 # will we be able to find a consistent set of params if we have two different Hamiltonians?
 
 # 20240123 try setting up an HT term... NOT SURE IF THIS IS CORRECT!!!!!!!
-HTfac = 0.5 # slope
+HTfac = 0.5 #0.5 # slope
 HTshift = 0.2 # y-offset
 HTarr = bDb # start with vibrational energy levels
 np.fill_diagonal(HTarr, HTfac * np.diag(HTarr) + HTshift) # make energies scale linearly with HT params
@@ -746,7 +743,7 @@ AbsData = np.transpose([eps, SimI]) # simulated absorption
 # cAbs2append = np.vstack([xvals2append, zeros2append]).T
 # cAbsSpectrum = np.vstack([cAbs2append, cAbsSpectrum])
 
-gamma=100 # homogeneous linewidth (placeholder for now)
+gamma=200 # homogeneous linewidth (placeholder for now)
 normAbs = PseudoVoigtDistribution(epsilon0, gamma, sigma, epsilon0)
 simAbs = SimData(AbsData, cAbsSpectrum, gamma, sigma, normAbs) # *1.1
 simAbs[:,1] = (simAbs[:,1]/np.max(simAbs[:,1])) * np.max(np.abs(AbsData[:,1]))
@@ -766,30 +763,40 @@ cdk3 = - dot(muTot[2], vecs)[0] * dot(magOps[2], vecs)[0] - dot(muTot_uv_k[0], v
 cdTot = Height*(cdk1 + cdk2 + cdk3)
 # np.set_printoptions(threshold=1000)
 
+
 CDdata = np.transpose([eps, cdTot])# simulated CD
-print(CDdata)
-# xvals2append = np.linspace(0,np.min(cCDSpectrum[:,0]),num=int(np.ceil(np.min(cCDSpectrum[:,0])/(cCDSpectrum[1,0]-cCDSpectrum[0,0]))))
-# zeros2append = np.zeros(xvals2append.shape)
-# cCD2append = np.vstack([xvals2append, zeros2append]).T
-# cCDSpectrum = np.vstack([cCD2append, cCDSpectrum])
+# print(CDdata)
 
 simCD = SimData(CDdata, cCDSpectrum, gamma/1.5, sigma/1.5, normAbs)#*1e40)
 simCD[:,1] = (simCD[:,1]/np.max(np.abs(simCD[:,1]))) * np.max(np.abs(CDdata[:,1]))
 # normalizing CD for now... sort out units later
 
+print('sum abs ='+str(sum(SimI)))
+print('sum cd ='+str(sum(cdTot)))
+
+def gauss(x, lam1, sig1, amp1):
+    return amp1 * np.exp(-(x-lam1)**2 / (2 *sig1**2))
+
 # plot CD and Abs
 fig,ax = plt.subplots(2,1,figsize=[10,8],sharex=True)
-ax[0].plot(cAbsSpectrum[:,0], (cAbsSpectrum[:,1]/np.max(cAbsSpectrum[:,1]))*np.max(AbsData[:,1]),'k')
-ax[0].scatter(AbsData[:,0],AbsData[:,1])
-ax[0].plot(simAbs[:,0],simAbs[:,1],'r')
+ax[0].plot(cAbsSpectrum[:,0], (cAbsSpectrum[:,1]/np.max(cAbsSpectrum[:,1]))*np.max(AbsData[:,1]),'k',linewidth=2.5)
+ax[0].scatter(AbsData[:,0],AbsData[:,1],color='b')
+ax[0].plot(simAbs[:,0],simAbs[:,1],'r',linewidth=2.5)
+laser_mu = 675
+laser_fwhm = 30
+laser_fwhm = 10**7/(675-(laser_fwhm/2)) - 10**7/(675+(laser_fwhm/2))
+laser_sig =  laser_fwhm / (2 * np.sqrt(2 * np.log(2)))
+ax[0].fill_between(simAbs[:,0],gauss(simAbs[:,0], 10**7/(675/2),laser_sig,np.max(AbsData[:,1])),color='gray',alpha=0.25)
+ax[0].axhline(0,color='k',linestyle='--')
 ax[0].set_title('Abs',fontsize=14)
 # plt.set_xlim(10000,max(cAbsSpectrum[:,0]))
 ax[0].set_xlim(27500,32000)
 
-ax[1].plot(cCDSpectrum[:,0],(cCDSpectrum[:,1]/np.max(np.abs(cCDSpectrum[:,1]))) * np.max(np.abs(CDdata[:,1])),'k')
-ax[1].scatter(CDdata[:,0],CDdata[:,1])#*1e-38 )
-ax[1].plot(simCD[:,0],simCD[:,1],'g')
+ax[1].plot(cCDSpectrum[:,0],(cCDSpectrum[:,1]/np.max(np.abs(cCDSpectrum[:,1]))) * np.max(np.abs(CDdata[:,1])),'k',linewidth=2.5)
+ax[1].scatter(CDdata[:,0],CDdata[:,1],color='b')#*1e-38 )
+ax[1].plot(simCD[:,0],simCD[:,1],'g',linewidth=2.5)
 # ax[1].plot(simCD[:,0],(simCD[:,1]/np.max(np.abs(simCD[:,1])))*np.max(np.abs(CDdata[:,1])),'g')
+ax[1].axhline(0,color='k',linestyle='--')
 ax[1].set_title('CD',fontsize=14)
 ax[1].set_xlabel(r'Energy $(cm^{-1})$',fontsize=14)
 # ax[1].plot(simCD[:,0],(simCD[:,1] + 1.2*(simCD[0,1])) )#*1e-40,'g')

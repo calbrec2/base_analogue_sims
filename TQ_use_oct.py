@@ -493,8 +493,8 @@ def get_c_spectra(temp):
 # =============================================================================
     # fileAbs = open("C:/MarcusLab/CD data analysis/2023_0718/MolE/1_ABS_0.txt", "r")
     # fileCD = open("C:/MarcusLab/CD data analysis/2023_0718/MolE/1_CD_0.txt", "r")
-    fileAbs = open("/Users/clairealbrecht/Dropbox/MATLAB_programs/claire_programs/from_Lulu/D12_25C_Abs_visible.txt", "r")
-    fileCD = open("/Users/clairealbrecht/Dropbox/MATLAB_programs/claire_programs/from_Lulu/D12_25C_CD_visible.txt", "r")
+    fileAbs = open("/Users/calbrec2/Dropbox/MATLAB_programs/claire_programs/from_Lulu/D12_25C_Abs_visible.txt", "r")
+    fileCD = open("/Users/calbrec2/Dropbox/MATLAB_programs/claire_programs/from_Lulu/D12_25C_CD_visible.txt", "r")
 
 
     AbsSpec = []
