@@ -389,18 +389,19 @@ omegas_gfs = omegas[(nEle-1)*nVib:nVib*nEle,0:nVib]
 alpha_gs = alpha[0:nVib]
 alpha_es = alpha[nVib:nVib*(nEle-1)]
 alpha_fs = alpha[nVib*(nEle-1):nVib*nEle]
-
+ 
 
 # look at sub matrices for transitions
 matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
-# matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
-# matrix_plotter(omegas_eeps, alpha_es, alpha_es,title=r"Energies for $\Sigma_{i,j} \omega_{e_ie'_j}$",frac=0.99,label_fontsize=18)
-# matrix_plotter(omegas_gfs, alpha_gs, alpha_fs,title=r'Energies for $\Sigma_{i} \omega_{gf_i}$',frac=0.99,label_fontsize=18)
+matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
+matrix_plotter(omegas_eeps, alpha_es, alpha_es,title=r"Energies for $\Sigma_{i,j} \omega_{e_ie'_j}$",frac=0.99,label_fontsize=18)
+matrix_plotter(omegas_gfs, alpha_gs, alpha_fs,title=r'Energies for $\Sigma_{i} \omega_{gf_i}$',frac=0.99,label_fontsize=18)
 #%%
 # Calculating pathways for omega 1, 2 3.
-omega1 = []
-for i in range(nterms):
-    if 
+omega1 = [omegas_ges[0,0], omegas_ges[1,1],   omega_gep,  omega_ge,   omega_gep,   omega_ge,     omega_ge,   omega_gep]
+omega2 = [omegas_gfs[0,0], omega_gfp,   omega_gf,   omega_gf,   omega_gfp,   omega_gfp,    omega_gfp,  omega_gf]        
+omega3 = [omegas_efs[1,0], omega_epfp,  omega_ef,   omega_epf,  omega_efp,   omega_epfp,   omega_efp,  omega_epf]
+    
 
 #%%
 plt.figure(figsize=[3,10]);
