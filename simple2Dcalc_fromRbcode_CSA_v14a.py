@@ -558,7 +558,7 @@ def overlap_params(xs, mu1, mu2, sig1, sig2, amp1, amp2):
 def gauss(x, lam1, sig1, amp1):
     return amp1 * np.exp(-(x-lam1)**2 / (2 *sig1**2))
 # =============================================================================
-# Calculate FFT
+# Calculate 2D FFT
 # =============================================================================
 def FFT_2d(data, t21ax_rt, time_ax, monoC_lam, scan_type): # do the zeropadding more explicitly than above...
     data_0 = np.zeros([len(t21ax_rt), len(t21ax_rt)], dtype='complex')
@@ -659,7 +659,7 @@ def overlap_params(xs, mu1, mu2, sig1, sig2): # caluclate new mu and sig after o
     sig_adj = np.sqrt(1/((1/sig1**2) + (1/sig2**2)))
     return mu_adj, sig_adj
 
-def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI,monoC_lam, omega_ge, omega_gep):
+def sim2Dspec2(t21, laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, monoC_lam, omega_ge, omega_gep):
     #%
     c0 = 0.000299792458 # mm / fs
     # t21 = 2 * np.pi * 10 * c0 * t21
@@ -1334,10 +1334,12 @@ def plot_comparer(ax1,ax2, data, sim, phase_cond, compare_mode = 'real', domain=
         
         if save_mode == 1:
             # file_path = os.path.join('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/2D scan/',date_folder,scan_folder)
-            file_path = os.path.join('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/2D scan/',date_folder,scan_folder)
+            # file_path = os.path.join('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/2D scan/',date_folder,scan_folder)
+            scan_folder_split = scan_folder.split('_2D')
+            file_path = os.path.join('/Users/calbrec2/Documents/github_base/Data/2PE2DFS/Data_lock_in/MNS_4uM/2D scan/',date_folder,scan_folder_split[0])#'20221202/20221202-142926_DQC_xz')
             date_str_len = len('20230101-120000')
             file_name_str = file_name #+ '_real_' + '_' + scan_folder[date_str_len:]
-            fig.savefig(file_path+'/'+file_name_str+'.pdf')
+            fig.savefig(file_path+'/'+file_name_str+'.pdf',transparent=True)
             print('...saving plot as: '+file_name_str)
             print('in location: '+file_path)
         
@@ -1431,10 +1433,12 @@ def plot_comparer(ax1,ax2, data, sim, phase_cond, compare_mode = 'real', domain=
         
         if save_mode == 1:
             # file_path = os.path.join('/Users/calbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/2D scan/',date_folder,scan_folder)
-            file_path = os.path.join('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/2D scan/',date_folder,scan_folder)
+            # file_path = os.path.join('/Users/clairealbrecht/Dropbox/Claire_Dropbox/Data/6MI MNS/2D scan/',date_folder,scan_folder)
+            scan_folder_split = scan_folder.split('_2D')
+            file_path = os.path.join('/Users/calbrec2/Documents/github_base/Data/2PE2DFS/Data_lock_in/MNS_4uM/2D scan/',date_folder,scan_folder_split[0])#'20221202/20221202-142926_DQC_xz')
             date_str_len = len('20230101-120000')
             file_name_str = file_name #+ scan_folder[date_str_len:]
-            fig.savefig(file_path+'/'+file_name_str+'.pdf')
+            fig.savefig(file_path+'/'+file_name_str+'.pdf',transparent=True)
             print('...saving plot as: '+file_name_str)
             print('in location: '+file_path)
 
@@ -1543,17 +1547,21 @@ omega_gep = 15050#15080#15005.2009#10**7/(332*2)
 # opt_vals = np.double(opt_vals[:len(opt_vals)-2])
 # laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam, theta12, omega_ge, omega_gep = opt_vals
 
-opt_res_path = '/Users/calbrec2/Dropbox/Claire_Dropbox/Data_FPGA/MNS_4uM/2D_scans/20230801/optimized_simulation_wSelecRules_wAlphaFix'
-opt_res_file = '20231101_102817_optimized_params.npy'
-opt_vals = np.load(opt_res_path+'/'+opt_res_file)
-laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, monoC_lam, omega_ge, omega_gep = opt_vals[:len(opt_vals)-2].astype('double')
-scan_folder_nrprp, scan_folder_dqc = opt_vals[len(opt_vals)-2:]
-scan_folder_nrprp = scan_folder_nrprp+'_FFT'
-scan_folder_dqc = scan_folder_dqc+'_FFT'
+# opt_res_path = '/Users/calbrec2/Dropbox/Claire_Dropbox/Data_FPGA/MNS_4uM/2D_scans/20230801/optimized_simulation_wSelecRules_wAlphaFix'
+# opt_res_file = '20231101_102817_optimized_params.npy'
+# opt_vals = np.load(opt_res_path+'/'+opt_res_file)
+# laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, monoC_lam, omega_ge, omega_gep = opt_vals[:len(opt_vals)-2].astype('double')
+# scan_folder_nrprp, scan_folder_dqc = opt_vals[len(opt_vals)-2:]
+# scan_folder_nrprp = scan_folder_nrprp+'_FFT'
+# scan_folder_dqc = scan_folder_dqc+'_FFT'
 #%
 
 # laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam, theta12, lam1, lam2, scan_folder_nrprp, scan_folder_dqc = opt_vals
 #%
+
+laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, monoC_lam, omega_ge, omega_gep= np.array(['675.4604875531508', '29.548885692820775', '3.7788147001277164',
+                                                                                    '3.58176414323636', '99.93454973747696', '36.81030482634722',
+                                                                                    '699.857081538499', '14672.710247455072', '15099.898691333703']).astype('double')
 
 scan_params = scan_folder_nrprp[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA_FFT')-1]
 # scan_params = scan_folder_nrprp[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA')-1]
@@ -1651,13 +1659,13 @@ plot2Dspectra(ax1_nrprp, ax2_nrprp, FT_rp, n_cont,ax_lim, title=r'RP($\omega$) w
 # ax_lim = [28,30]
 
 # if timing_mode == 't32 = 0':
-weight_func_mode = 0 #1
-save_mode = save_mode
+weight_func_mode = 0#1
+save_mode = 1#save_mode
 # save_name = 'sim_' + scan_folder_dqc +'_FTdqcReComp'
 plot_comparer(ax1_dqc, ax2_dqc, DQC_exp, FT_dqc, 'DQC',figsize=(16,4),ax_lim = ax_lim ,save_mode = save_mode, file_name = save_name, scan_folder = scan_folder_dqc,weight_func_mode=weight_func_mode)
-# save_name = 'sim_' + scan_folder_nrprp +'_FTnrpReComp'
+save_name = 'sim_' + scan_folder_nrprp +'_FTnrpReComp'
 plot_comparer(ax1_nrprp,ax2_nrprp, NRP_exp, FT_nrp, 'NRP',figsize=(16,4),ax_lim = ax_lim,save_mode = save_mode, file_name = save_name, scan_folder = scan_folder_nrprp,weight_func_mode=weight_func_mode)
-# save_name = 'sim_' + scan_folder_nrprp +'_FTrpReComp'
+save_name = 'sim_' + scan_folder_nrprp +'_FTrpReComp'
 plot_comparer(ax1_nrprp,ax2_nrprp, RP_exp, FT_rp, 'RP',figsize=(16,4),ax_lim = ax_lim,save_mode = save_mode, file_name = save_name,scan_folder = scan_folder_nrprp,weight_func_mode=weight_func_mode)
     
     #%
