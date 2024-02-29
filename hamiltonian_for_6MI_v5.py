@@ -37,6 +37,10 @@ import os
 cwd = os.path.dirname(os.path.realpath(__file__))
 print(cwd)
 
+# import data .mat file
+import os
+import glob
+
 import scipy.optimize as opt
 #%% Matrix plotter & grab data
 ###############################################
@@ -442,7 +446,32 @@ print('lam = '+str(lam))
 eigs_1PE, vecs_1PE = Ham_1PE(epsilon0, omega0, lam)
 AbsData, simAbs = calc_Abs(vecs_1PE, eigs_1PE, sigma=20, gamma=200, plot_mode=1)
 
+# From 20240226 fit
+# epsilon0 = 29010.62480689866
+# omega0 = 149.93304096216116
+# lam = 2.694887318141411
+
 #%% plot2Dspectra function from simple2Dcalc_fromRbcode_CSA_v14a
+import matplotlib as mpl
+
+# Makes it so the color bar of the 2D spec always is centered about zero (green)
+class MidpointNormalize(mpl.colors.Normalize):
+    def __init__(self, vmin, vmax, midpoint=0, clip=False):
+        self.midpoint = midpoint
+        mpl.colors.Normalize.__init__(self, vmin, vmax, clip)
+
+    def __call__(self, value, clip=None):
+        denom_min = (self.midpoint - self.vmax)
+        if denom_min == 0:
+            denom_min = 1
+        normalized_min = max(0, 1 / 2 * (1 - abs((self.midpoint - self.vmin) / denom_min)))
+        denom_max = (self.midpoint - self.vmin)
+        if denom_max == 0:
+            denom_max = 1
+        normalized_max = min(1, 1 / 2 * (1 + abs((self.vmax - self.midpoint) / denom_max)))
+        normalized_mid = 0.5
+        x, y = [self.vmin, self.midpoint, self.vmax], [normalized_min, normalized_mid, normalized_max]
+        return np.ma.masked_array(np.interp(value, x, y))
 
 # plotting function that creates aspect ratio 1 plots with the correct axes and labels, etc.
 def plot2Dspectra(ax1, ax2, data, n_cont,ax_lim, title = '', domain = 'time',save_mode = 0,file_name=' ',scan_folder = ' '):
@@ -450,7 +479,8 @@ def plot2Dspectra(ax1, ax2, data, n_cont,ax_lim, title = '', domain = 'time',sav
     axes_fontsize = 14
     cmap = 'jet' 
     # print('scan_folder = '+scan_folder)
-    scan_params = scan_folder[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA_FFT')]
+    # scan_params = scan_folder[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA_FFT')]
+    scan_params = scan_folder[len('20230101-120000-'):]
     # stages = scan_params[len(scan_params)-2:]
     scan_type = scan_params[:len(scan_params)-3]
     # print('scan_type = '+scan_type)
@@ -612,7 +642,8 @@ def plot_comparer(ax1,ax2, data, sim, phase_cond, compare_mode = 'real', domain=
     #     xlabel = ''
     #     ylabel = xlabel
         
-    scan_params = scan_folder[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA_FFT')]
+    # scan_params = scan_folder[len('20230101-120000-'):len(scan_folder)-len('_2DFPGA_FFT')]
+    scan_params = scan_folder[len('20230101-120000-'):len(scan_folder)]
     # stages = scan_params[len(scan_params)-2:]
     scan_type = scan_params[:len(scan_params)-3]
     # print('scan_type = '+scan_type)
@@ -1101,9 +1132,9 @@ FT2D_mode = 1
 FPGA_mode = 0
 sample_name = 'MNS_4uM'
 
-date_folder = '20221202'
-scan_folder_nrprp = '20221202-135005_NRP_RP_xz' # first set of data optimized 
-scan_folder_dqc = '20221202-142926_DQC_xz'
+# date_folder = '20221202'
+# scan_folder_nrprp = '20221202-135005_NRP_RP_xz' # first set of data optimized 
+# scan_folder_dqc = '20221202-142926_DQC_xz'
 # parameters saved here: '2023-07-21_optimized_params.npy'
 
 # date_folder = '20230208'
@@ -1133,7 +1164,7 @@ scan_folder_dqc = '20221202-142926_DQC_xz'
 
 
 
-# FPGA_mode = 1
+FPGA_mode = 1
 # sample_name = 'MNS_4uM'
 # date_folder = '20230728' # all six data sets
 # scan_folder_nrprp = '20230728-115041-NRP_RP_xz_2DFPGA'
@@ -1152,9 +1183,9 @@ scan_folder_dqc = '20221202-142926_DQC_xz'
 # saved results w/ alpha fix in: 20231101_083207_optimized_params
 # =============================================================================
 
-# date_folder = '20230801' # two good data sets
-# scan_folder_nrprp = '20230801-115033-NRP_RP_xz_2DFPGA'
-# scan_folder_dqc = '20230801-130235-DQC_xz_2DFPGA'
+date_folder = '20230801' # two good data sets
+scan_folder_nrprp = '20230801-115033-NRP_RP_xz_2DFPGA'
+scan_folder_dqc = '20230801-130235-DQC_xz_2DFPGA'
 # # scan_folder_nrprp = '20230801-144625-NRP_RP_yz_2DFPGA'
 # # scan_folder_dqc = '20230801-160023-DQC_yz_2DFPGA'
 # =============================================================================
@@ -1762,9 +1793,14 @@ def sim2Dspec3(t21, laser_lam, laser_fwhm, mu1, mu2, Gam, sigI, monoC_lam, epsil
 # do we need to add a window function? (see example in simple2Dcalc_fromRbcode_CSA_v14a)
 def chisq_calc(params):
     t21 = np.linspace(0,tmax,num=Ntimesteps) # generalize this so that when data coming in is over a different range this doesn't cause problems...
-    laser_lam, laser_fwhm, mu1, mu2, Gam, sigI, monoC_lam = params
+    # laser_lam, laser_fwhm, mu1, mu2, Gam, sigI, monoC_lam = params
+    laser_lam, laser_fwhm, mu1, mu2, Gam, sigI, monoC_lam, epsilon0, omega0, lam = params
     
-    t1_out, t2_out, cm_DQC, cm_NRP, cm_RP, ax1_dqc, ax2_dqc, ax1_nrprp, ax2_nrprp, FT_dqc, FT_nrp, FT_rp = sim2Dspec3(t21, laser_lam, laser_fwhm, mu1, mu2, Gam, sigI, monoC_lam)
+    # epsilon0 = 29010.62480689866
+    # omega0 = 149.93304096216116
+    # lam = 2.69488731814141
+    
+    t1_out, t2_out, cm_DQC, cm_NRP, cm_RP, ax1_dqc, ax2_dqc, ax1_nrprp, ax2_nrprp, FT_dqc, FT_nrp, FT_rp = sim2Dspec3(t21, laser_lam, laser_fwhm, mu1, mu2, Gam, sigI, monoC_lam, epsilon0, omega0, lam)
     
     # real part RP
     sim_denom = np.max(np.max(np.abs(np.real(FT_rp))))
@@ -1839,16 +1875,17 @@ t21 = np.linspace(0,tmax,num=Ntimesteps) # simulate at the retimed timesteps
 
 #%%
 
-laser_lam = 680 #675
+laser_lam = 675
 laser_fwhm = 30
 mu1 =3.5
 mu2 =3 
 Gam =85 #85
 sigI =95 #65 
 monoC_lam = 700#701.9994
-epsilon0 = 27900 #29023
-omega0 = 70 # 149.8
-lam =2.6 #2.677
+# epsilon0, omega0 and lam can be calculated from CD/Abs optimization... or defined here
+# epsilon0 = 27900 #29023
+# omega0 = 70 # 149.8
+# lam =2.6 #2.677
 # pack parameters into param array
 params = laser_lam, laser_fwhm, mu1, mu2, Gam, sigI, monoC_lam 
 
@@ -1899,13 +1936,86 @@ plot_comparer(ax1_nrprp,ax2_nrprp, RP_exp, FT_rp, 'RP',figsize=(16,4),ax_lim = a
 t21 = np.linspace(0,116.0805,num=Ntimesteps)
 # MNS bounds params
 laser_lam_bounds = [674.5, 675.5] 
-laser_fwhm_bounds = [29,30]
-mu1_bounds = [3,4]
-mu2_bounds = [3,4]
+laser_fwhm_bounds = [29,32]
+mu1_bounds = [2.8,4.2]
+mu2_bounds = [2.8,4.2]
 Gam_bounds = [30, 1e2] 
 sigI_bounds = [30, 1e2] 
 monoC_lam_bounds = [699.5, 700.5]
 epsilon0_bounds = [27000, 30000]
+omega0_bounds = [50,800]
+lam_bounds = [1,4]
+bounds = [laser_lam_bounds, laser_fwhm_bounds, mu1_bounds, mu2_bounds, Gam_bounds, sigI_bounds, monoC_lam_bounds, epsilon0_bounds, omega0_bounds, lam_bounds]
+x0 = [laser_lam, laser_fwhm, mu1, mu2, Gam, sigI, monoC_lam, epsilon0, omega0, lam]
+
+t21 = np.linspace(0,116.0805,num=Ntimesteps) 
+if __name__ == '__main__':
+    res = opt.differential_evolution(func=chisq_calc, 
+                                      bounds=bounds,
+                                      x0=x0,
+                                      disp=True,
+                                      # workers=1,
+                                      # maxiter=1000,
+                                      polish=True,
+                                      # atol=1e-8, #1e-6, 1e-10,
+                                      # tol = 1e-8, #1e-6, 10,
+                                      # mutation=(0,1.9),
+                                      # popsize=30,
+                                      # updating='immediate',
+                                      # strategy = 'best1exp')
+                                      )
+                                    # 'best1exp' # this one did a decent job
+                                    # 'rand1exp' didn't finish in 500 iter
+                                    # 'randtobest1exp' did fine... copied res and plots into onenote
+    # lam1, lam2, mu1_6MI, mu2_6MI, Gam, sigI, delta = res.x
+    # laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam, theta12 = res.x
+    # laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, delta, monoC_lam, theta12, omega_ge, omega_gep = res.x
+    # laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, monoC_lam, theta12, omega_ge, omega_gep = res.x
+    laser_lam, laser_fwhm, mu1_6MI, mu2_6MI, Gam, sigI, monoC_lam = res.x
+    # t21 = t21.flatten()
+
+#%%
+t1_out, t2_out, cm_DQC, cm_NRP, cm_RP, ax1_dqc, ax2_dqc, ax1_nrprp, ax2_nrprp, FT_dqc, FT_nrp, FT_rp = sim2Dspec3(t21, laser_lam, laser_fwhm, mu1, mu2, Gam, sigI, monoC_lam, epsilon0, omega0, lam)
+#%
+n_cont = 15
+ax_lim = [14, 15.5]
+ax_lim = [13,16]
+# =============================================================================
+save_mode = 0
+# =============================================================================
+if timing_mode =='t32 = 0':
+    timing_mode_str = r'($\tau_{32}$ = 0)'
+elif timing_mode == 't43 = 0':
+    timing_mode_str = r'($\tau_{43}$ = 0)'
+elif timing_mode == 't21 = 0':
+    timing_mode_str = r'($\tau_{21}$ = 0)'
+
+save_name = 'sim_' + scan_folder_dqc + '_tauDQC'
+plot2Dspectra(t1_out, t2_out, cm_DQC, n_cont,ax_lim=[min(t1_out[0,:]), max(t1_out[0,:])], title=r'DQC($\tau$) with '+timing_mode_str, domain='time',save_mode = save_mode, file_name = save_name,scan_folder=scan_folder_dqc)
+save_name = 'sim_' + scan_folder_nrprp + '_tauNRP'
+plot2Dspectra(t1_out, t2_out, cm_NRP, n_cont,ax_lim=[min(t1_out[0,:]), max(t1_out[0,:])], title=r'NRP($\tau$) with '+timing_mode_str, domain='time',save_mode = save_mode, file_name = save_name,scan_folder = scan_folder_nrprp)
+save_name = 'sim_' + scan_folder_nrprp + '_tauRP'
+plot2Dspectra(t1_out, t2_out, cm_RP, n_cont,ax_lim=[min(t1_out[0,:]), max(t1_out[0,:])], title=r'RP($\tau$) with '+timing_mode_str, domain='time',save_mode = save_mode, file_name = save_name,scan_folder=scan_folder_nrprp)
+
+FT_dqc = FT_dqc/ np.max(np.max(FT_dqc))
+FT_nrp = FT_nrp/ np.max(np.max(FT_nrp))
+FT_rp = FT_rp /  np.max(np.max(FT_rp))
+
+save_mode = save_mode
+save_name = 'sim_' + scan_folder_dqc+'_FTdqc'
+plot2Dspectra(ax1_dqc, ax2_dqc, FT_dqc, n_cont,ax_lim, title=r'DQC($\omega$) with '+timing_mode_str, domain='freq',save_mode = save_mode, file_name = save_name,scan_folder=scan_folder_dqc)
+save_name = 'sim_' + scan_folder_nrprp+'_FTnrp'
+plot2Dspectra(ax1_nrprp, ax2_nrprp, FT_nrp, n_cont,ax_lim, title=r'NRP($\omega$) with '+timing_mode_str, domain='freq',save_mode = save_mode, file_name = save_name,scan_folder=scan_folder_nrprp)
+save_name = 'sim_' + scan_folder_nrprp+'_FTrp'
+plot2Dspectra(ax1_nrprp, ax2_nrprp, FT_rp, n_cont,ax_lim, title=r'RP($\omega$) with '+timing_mode_str, domain='freq',save_mode = save_mode, file_name = save_name,scan_folder=scan_folder_nrprp)
+
+save_mode = 0#save_mode
+# save_name = 'sim_' + scan_folder_dqc +'_FTdqcReComp'
+plot_comparer(ax1_dqc, ax2_dqc, DQC_exp, FT_dqc, 'DQC',figsize=(16,4),ax_lim = ax_lim ,save_mode = save_mode, file_name = save_name, scan_folder = scan_folder_dqc) #,weight_func_mode=weight_func_mode)
+save_name = 'sim_' + scan_folder_nrprp +'_FTnrpReComp'
+plot_comparer(ax1_nrprp,ax2_nrprp, NRP_exp, FT_nrp, 'NRP',figsize=(16,4),ax_lim = ax_lim,save_mode = save_mode, file_name = save_name, scan_folder = scan_folder_nrprp)#,weight_func_mode=weight_func_mode)
+save_name = 'sim_' + scan_folder_nrprp +'_FTrpReComp'
+plot_comparer(ax1_nrprp,ax2_nrprp, RP_exp, FT_rp, 'RP',figsize=(16,4),ax_lim = ax_lim,save_mode = save_mode, file_name = save_name,scan_folder = scan_folder_nrprp)#,weight_func_mode=weight_func_mode)
 
 
 

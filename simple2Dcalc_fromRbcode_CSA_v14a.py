@@ -1645,8 +1645,8 @@ save_name = 'sim_' + scan_folder_nrprp + '_tauRP'
 plot2Dspectra(t1_out, t2_out, cm_RP, n_cont,ax_lim=[min(t1_out[0,:]), max(t1_out[0,:])], title=r'RP($\tau$) with '+timing_mode_str, domain='time',save_mode = save_mode, file_name = save_name,scan_folder=scan_folder_nrprp)
 
 FT_dqc = FT_dqc/ np.max(np.max(FT_dqc))
-FT_nrp = FT_nrp/np.max(np.max(FT_nrp))
-FT_rp = FT_rp / np.max(np.max(FT_rp))
+FT_nrp = FT_nrp/ np.max(np.max(FT_nrp))
+FT_rp = FT_rp /  np.max(np.max(FT_rp))
 
 save_mode = save_mode
 save_name = 'sim_' + scan_folder_dqc+'_FTdqc'
