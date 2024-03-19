@@ -147,12 +147,12 @@ def get_c_spectra():
 
 
 cAbsSpectrum, cCDSpectrum = get_c_spectra()
-fig,ax = plt.subplots(2,1,figsize=[10,8],sharex=True)
-ax[0].plot(cAbsSpectrum[:,0],cAbsSpectrum[:,1])
-ax[0].axhline(0,color='k',linestyle='--')
-ax[0].set_xlim(25500,36000)
-ax[1].plot(cCDSpectrum[:,0],cCDSpectrum[:,1])
-ax[1].axhline(0,color='k',linestyle='--')
+# fig,ax = plt.subplots(2,1,figsize=[10,8],sharex=True)
+# ax[0].plot(cAbsSpectrum[:,0],cAbsSpectrum[:,1])
+# ax[0].axhline(0,color='k',linestyle='--')
+# ax[0].set_xlim(25500,36000)
+# ax[1].plot(cCDSpectrum[:,0],cCDSpectrum[:,1])
+# ax[1].axhline(0,color='k',linestyle='--')
 #%% variables and simple definitions
 ########### VARIABLE DEFINITIONS ##############
 Pi = np.pi
@@ -1233,12 +1233,12 @@ sample_name = 'MNS_4uM'
 # =============================================================================
 
 date_folder = '20231129'
-scan_folder_nrprp = '20231129-092422-NRP_RP_xz_2DFPGA'
-scan_folder_dqc = '20231129-102354-DQC_xz_2DFPGA'
+# scan_folder_nrprp = '20231129-092422-NRP_RP_xz_2DFPGA'
+# scan_folder_dqc = '20231129-102354-DQC_xz_2DFPGA'
 # scan_folder_nrprp ='20231129-113400-NRP_RP_yz_2DFPGA'
 # scan_folder_dqc = '20231129-123606-DQC_yz_2DFPGA'
-# scan_folder_nrprp ='20231129-134634-NRP_RP_xy_2DFPGA'
-# scan_folder_dqc = '20231129-144844-DQC_xy_2DFPGA'
+scan_folder_nrprp ='20231129-134634-NRP_RP_xy_2DFPGA'
+scan_folder_dqc = '20231129-144844-DQC_xy_2DFPGA'
 
 # =============================================================================
 # Let's look at MNT data
@@ -1410,11 +1410,16 @@ eigs_2PE, vecs_2PE= Ham_2PE(epsilon0, omega0, lam)
 # overlap_alpha = alpha1 * alpha2 * alpha3
 
 #%%
+
+def gauss(x, lam1, sig1, amp1):
+    return amp1 * np.exp(-(x-lam1)**2 / (2 *sig1**2))
+
+
 # =============================================================================
 #  Calculate all possible energy differences given the eigenenergies 
 #  => these give the omega21, omega_32, omega_43 values
 # =============================================================================
-def eigs2omegas(eigs_2PE, laser_omega, laser_sig_omega, selection_rules = 1, plot_mode = 0):
+def eigs2omegas(eigs_2PE, sigI, laser_omega, laser_sig_omega, selection_rules = 1, plot_mode = 0):
     #%
     # apply shift to energies based on overlap with laser at THIS POINT. And don't do it in the sim2Dcalc
     eigs = eigs_2PE # could remove the gn levels here? but no I'll leave them for now
@@ -1445,8 +1450,13 @@ def eigs2omegas(eigs_2PE, laser_omega, laser_sig_omega, selection_rules = 1, plo
     # look at sub matrices for transitions (if you want)
     # matrix_plotter(omegas_ges, alpha_gs, alpha_es,title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
     # matrix_plotter(omegas_efs, alpha_es, alpha_fs,title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
-    # matrix_plotter(omegas_eeps, alpha_es, alpha_es,title=r"Energies for $\Sigma_{i,j} \omega_{e_ie'_j}$",frac=0.99,label_fontsize=18)
+    # matrix_plotter(omegas_eeps*1e3, alpha_es, alpha_es,title=r"Energies for $\Sigma_{i,j} \omega_{e_ie'_j}$",frac=0.99,label_fontsize=18)
     # matrix_plotter(omegas_gfs*1e3, alpha_gs, alpha_fs,title=r'Energies for $\Sigma_{i} \omega_{gf_i}$',figsize=[12,12],frac=0.99,label_fontsize=18)
+    
+    # for t32 =/= 0 allow e->f to access all e states but still need to go odd->even or even->odd
+    omegas_efs_all = omegas_efs 
+    omegas_eeps_all = omegas_eeps
+    
     
     # calculate corresponding alphas -- how to set these up for the beat freqs? 20240304 CSA
     overlap_alphas_ges = np.real(gauss(omegas_ges, laser_omega, laser_sig_omega,1))
@@ -1463,10 +1473,10 @@ def eigs2omegas(eigs_2PE, laser_omega, laser_sig_omega, selection_rules = 1, plo
         omegas_ges = omegas_ges[:,0].reshape(omegas_ges[:,0].shape[0],1) # we actually dont want any g other than g0
         if plot_mode == 1:
             matrix_plotter(omegas_ges, [alpha_gs[0]], np.array(alpha_es[1::2]),title=r'Energies for $\Sigma_i \omega_{ge_i}$',frac=0.99,label_fontsize=18)
-        omegas_eeps = omegas_eeps[1::2,1::2] # (odd -> even) ... is this right?
-        # 20240304 CSA - am I allowing e3-e1 = (+) AND e1-e3 = (-)
+        omegas_eeps = omegas_eeps[1::2,1::2] # (odd -> odd) ... is this right?
+        # 20240304 CSA - am I allowing e3-e1 = (+) AND e1-e3 = (-)... yes
         if plot_mode == 1:
-            matrix_plotter(omegas_eeps, alpha_es[1::2],alpha_es[1::2],title=r'Energies for $\Sigma_{i,j} \omega_{e_ie_j}$',frac=0.99,label_fontsize=18)
+            matrix_plotter(omegas_eeps*1e3, alpha_es[1::2],alpha_es[1::2],title=r'Energies for $\Sigma_{i,j} \omega_{e_ie_j}$',frac=0.99,label_fontsize=18)
         # how to take care of selection rules for eep? should it only be the odd e's?
         omegas_gfs = omegas_gfs[::2, ::2] # even g -> even f
         omegas_gfs = omegas_gfs[:,0].reshape(omegas_ges[:,0].shape[0],1) # we actually dont want any g other than g0
@@ -1475,20 +1485,66 @@ def eigs2omegas(eigs_2PE, laser_omega, laser_sig_omega, selection_rules = 1, plo
         omegas_efs = omegas_efs[::2,1::2] # select omegas_efs that we want (odd e's -> even f's)
         if plot_mode == 1:
             matrix_plotter(omegas_efs, alpha_es[1::2], alpha_fs[::2],title=r'Energies for $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
+    
+        # allow for evens through energy transfer... initial rough approach
+        omegas_eeps_evens = omegas_eeps_all[::2,::2] # (even e -> even e) ... use this for possible energy transfer?
+        omegas_efs_evens = omegas_efs_all[1::2,::2] # (even e's -> odd f's)
+        if plot_mode == 1:    
+            matrix_plotter(omegas_eeps_evens*1e3, alpha_es[::2],alpha_es[::2],title=r'Energies for evens $\Sigma_{i,j} \omega_{e_ie_j}$',frac=0.99,label_fontsize=18)
+            matrix_plotter(omegas_efs_evens*1e3, alpha_es[::2],alpha_fs[1::2],title=r'Energies for evens->odds $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
+
+    
     #%
     # omegas for DQC
     omegas123 = []
-    alphas_123 = []
     for i in range(len(omegas_ges)):
         for j in range(len(omegas_eeps)):
             for k in range(len(omegas_efs)):
                 # omegas123.append([omegas_ges[i,0], omegas_gfs[k,0], omegas_efs[k,j]])
                 omegas123.append([omegas_ges[i,0], omegas_gfs[k,0], omegas_efs[k,j]])
     #                                omega1              omega2          omega3
-                alphas_123.append([overlap_alphas_ges[i,0], overlap_alphas_gfs[k,0],overlap_alphas_efs[k,j]])
-    #                                   alpha1                     alpha2              alpha3
     omegas123_dqc = np.array(omegas123)
-    alphas123_dqc = np.array(alphas_123)
+    
+    ET = 1
+    if ET == 1:
+        eigs_2PE, vecs_2PE = Ham_2PE(epsilon0, omega0, lam) 
+        omegas= np.real(np.subtract.outer(eigs_2PE,eigs_2PE))
+        # select the regions of the matrix corresponding to each set of transitions
+        omegas_ges_full = omegas[nVib:nVib*(nEle-1),0:nVib]
+        omegas_ges_full = omegas_ges_full[:,0]
+        omegas_efs_full = omegas[(nEle-1)*nVib:nEle*nVib, nVib:2*nVib]
+        omegas_eeps_full = omegas[nVib:2*nVib, nVib:(nEle-1)*nVib]
+        omegas_gfs_full = omegas[(nEle-1)*nVib:nVib*nEle,0:nVib]
+        omegas_gfs_full = omegas_gfs_full[:,0]
+        
+        # allow for evens through energy transfer... initial rough approach
+        omegas_ges_evens = omegas_ges_full[::2]#,::2]
+        omegas_eeps_evens = omegas_eeps_full[::2,::2] # (even e -> even e) ... use this for possible energy transfer?
+        omegas_efs_evenToOdd = omegas_efs_full[1::2,::2] # (even e's -> odd f's)
+        omegas_gfs_evenToOdd = omegas_gfs_full[1::2]#,::2] # (even g's -> off f's) ... must proceed through virtual state who decays to even e
+        # if plot_mode == 1:  
+            # matrix_plotter(omegas_ges_evens*1e3, alpha_gs[::2],alpha_es[::2],title=r'Energies for evens $\Sigma_{i,j} \omega_{g_ie_j}$',frac=0.99,label_fontsize=18)
+        #     matrix_plotter(omegas_eeps_evens*1e3, alpha_es[::2],alpha_es[::2],title=r'Energies for evens $\Sigma_{i,j} \omega_{e_ie_j}$',frac=0.99,label_fontsize=18)
+            # matrix_plotter(omegas_efs_evens*1e3, alpha_es[::2],alpha_fs[1::2],title=r'Energies for evens->odds $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
+    
+    
+        ETarr = np.zeros(len(omegas123_dqc))
+        # allow for pathways that undergo energy transfer during t32
+        if ET == 1:
+            omegas123_dqc_wET = []
+            # pathway_ges_evenStart = []
+            nterms = int(nVib/2)
+            # nterms =10
+            for i in range(nterms):
+                for j in range(nterms):
+                    for k in range(nterms):
+                        # omegas123.append([omegas_ges[i,0], omegas_gfs[k,0], omegas_efs[k,j]])
+            #                                omega1                     omega2                     omega3
+                        omegas123_dqc_wET.append([omegas_ges[i,0], omegas_gfs_evenToOdd[k], omegas_efs_evenToOdd[k,j]])
+
+            ETarr = np.hstack([ETarr, np.ones(len(omegas123_dqc_wET))])
+            omegas123_dqc_wET = np.array(omegas123_dqc_wET)
+            omegas123_dqc = np.vstack([omegas123_dqc, omegas123_dqc_wET])
     
     
     # plt.figure(figsize=[30,7])
@@ -1521,25 +1577,44 @@ def eigs2omegas(eigs_2PE, laser_omega, laser_sig_omega, selection_rules = 1, plo
     
     # omegas for NRP & RP
     omegas123 = []
-    alphas123 = []
     for i in range(len(omegas_ges)):
         for j in range(len(omegas_eeps)):
             for k in range(len(omegas_efs)):
                 omegas123.append([omegas_ges[i,0], omegas_eeps[j,i], omegas_efs[k,j]])
     #                                omega1              omega2          omega3
-                alphas123.append([overlap_alphas_ges[i,0], overlap_alphas_ges[j,0],overlap_alphas_efs[k,j]])
+                # alphas123.append([overlap_alphas_ges[i,0], overlap_alphas_ges[j,0],overlap_alphas_efs[k,j]])
     #                               omega1           overlap for other omega ge brining to omega_ee',  omega3
     omegas123_nrprp = np.array(omegas123)
-    alphas123_nrprp = np.array(alphas123)
     
-    return omegas123_nrprp, omegas123_dqc, omegas_ges, omegas_efs, omegas_eeps, omegas_gfs, alphas123_dqc, alphas123_nrprp
+    
+    ETarr = np.zeros(len(omegas123_dqc))
+    # allow for pathways that undergo energy transfer during t32
+    if ET == 1:
+        omegas123_nrprp_wET = []
+        # pathway_ges_evenStart = []
+        nterms = int(nVib/2)
+        # nterms =10
+        for i in range(nterms):
+            for j in range(nterms):
+                for k in range(nterms):
+                    # omegas123.append([omegas_ges[i,0], omegas_gfs[k,0], omegas_efs[k,j]])
+        #                                omega1                     omega2                     omega3
+                    omegas123_nrprp_wET.append([omegas_ges[i,0], omegas_eeps_evens[j,i], omegas_efs_evenToOdd[k,j]])
+
+        ETarr = np.hstack([ETarr, np.ones(len(omegas123_nrprp_wET))])
+        omegas123_nrprp_wET = np.array(omegas123_nrprp_wET)
+        omegas123_nrprp = np.vstack([omegas123_nrprp, omegas123_nrprp_wET])
+
+    return omegas123_nrprp, omegas123_dqc, omegas_ges, omegas_efs, omegas_eeps, omegas_gfs #, alphas123_dqc, alphas123_nrprp
 
 laser_lam = 675
 laser_fwhm = 30
+sigI = 50
 laser_omega = 10**7 / laser_lam
 laser_fwhm_omega = 10**7/(laser_lam - (laser_fwhm/2)) - 10**7/(laser_lam + (laser_fwhm/2)) # fwhm in cm^-1
 laser_sig_omega = laser_fwhm_omega / (2 * np.sqrt(2 * np.log(2))) # FWHM -> sigma (gaussian)
-omegas123_nrprp, omegas123_dqc,omegas_ges, omegas_efs, omegas_eeps, omegas_gfs, alphas123_dqc, alphas123_nrprp = eigs2omegas(eigs_2PE,laser_omega, laser_sig_omega)
+# omegas123_nrprp, omegas123_dqc,omegas_ges, omegas_efs, omegas_eeps, omegas_gfs, alphas123_dqc, alphas123_nrprp = eigs2omegas(eigs_2PE,sigI,laser_omega, laser_sig_omega)
+omegas123_nrprp, omegas123_dqc,omegas_ges, omegas_efs, omegas_eeps, omegas_gfs = eigs2omegas(eigs_2PE,sigI,laser_omega, laser_sig_omega)
 
 #%% notes on building mu arrays
 # =============================================================================
@@ -1772,8 +1847,6 @@ def gen_alpha_overlaps(laser_omega,laser_sig_omega,omegas_ges,omegas_eeps,omegas
     
     
 #%%
-def gauss(x, lam1, sig1, amp1):
-    return amp1 * np.exp(-(x-lam1)**2 / (2 *sig1**2))
 
 # =============================================================================
 # Calculate 2D FFT
@@ -1889,7 +1962,8 @@ def sim2Dspec3(t21, laser_lam, laser_fwhm, mus, Gam, sigI, monoC_lam, epsilon0, 
     
     # use eigenvalues to generate omegas for dqc, nrprp and each of the transitions
     # and calculate energy and intensity shifts due to laser overlap
-    omegas123_nrprp, omegas123_dqc,omegas_ges, omegas_efs, omegas_eeps, omegas_gfs, alphas123_dqc, alphas123_nrprp = eigs2omegas(eigs_2PE,laser_omega, laser_sig_omega) #,selection_rules = 1, plot_mode = 0)
+    # omegas123_nrprp, omegas123_dqc,omegas_ges, omegas_efs, omegas_eeps, omegas_gfs, alphas123_dqc, alphas123_nrprp = eigs2omegas(eigs_2PE,sigI,laser_omega, laser_sig_omega) #,selection_rules = 1, plot_mode = 0)
+    omegas123_nrprp, omegas123_dqc,omegas_ges, omegas_efs, omegas_eeps, omegas_gfs= eigs2omegas(eigs_2PE,sigI,laser_omega, laser_sig_omega) #,selection_rules = 1, plot_mode = 0)
     # 20240307 CSA - trying to calculate alphas with mu's instead (below)
     
     # generate mu products for each pathway (can this be further generalized?)
@@ -2174,11 +2248,11 @@ if timing_mode == 't32 = 0':
     mu1 = 4
     mu2 = 4
     mu3 = 4
-    Gam = 105 #80#70 #69 #85
+    Gam = 85 #80#70 #69 #85
     sigI = 60#60 #65 
     monoC_lam = 700
-    epsilon0 = 28600 #28286
-    omega0 = 65#60 #40 #50#34 
+    epsilon0 = 28286 #28600 #
+    omega0 = 50 #50#34 
     lam =2.8 #3 #3.7#3.0 
 elif timing_mode == 't21 = 0':
     laser_lam = 675 # 675
@@ -2601,9 +2675,12 @@ print('  ')
 #%%
 def pathway_plotter(epsilon0, omega0, lam):
     omega0 = 150 # for visual purposes make this bigger than the actual value
+#%
+    ET = 1
 
     eigs_2PE, vecs_2PE = Ham_2PE(epsilon0, omega0, lam) 
-    omegas123_nrprp, omegas123_dqc, omegas_ges, omegas_efs, omegas_eeps, omegas_gfs, alphas123_dqc, alphas123_nrprp = eigs2omegas(eigs_2PE, laser_omega, laser_sig_omega, selection_rules = 1, plot_mode = 0)
+    # omegas123_nrprp, omegas123_dqc, omegas_ges, omegas_efs, omegas_eeps, omegas_gfs, alphas123_dqc, alphas123_nrprp = eigs2omegas(eigs_2PE, sigI,laser_omega, laser_sig_omega, selection_rules = 1, plot_mode = 0)
+    # omegas123_nrprp, omegas123_dqc, omegas_ges, omegas_efs, omegas_eeps, omegas_gfs = eigs2omegas(eigs_2PE, sigI,laser_omega, laser_sig_omega, selection_rules = 1, plot_mode = 0)
     omegas= np.real(np.subtract.outer(eigs_2PE,eigs_2PE))
     # select the regions of the matrix corresponding to each set of transitions
     omegas_ges_full = omegas[nVib:nVib*(nEle-1),0:nVib]
@@ -2621,65 +2698,129 @@ def pathway_plotter(epsilon0, omega0, lam):
     for i in range(nterms):
         for j in range(nterms):
             for k in range(nterms):
-                # for l in range(nterms):
-    #             omegas123.append([omegas_ges[i,0], omegas_gfs[k,0], omegas_efs[k,j]])
-    # #                                omega1              omega2          omega3
-    #             pathway_omegas.append([omegas_efs[j,k], omegas_ges[k,0], omegas_ges[i,0], omegas_efs[j,i]])
                 # omegas123.append([omegas_ges[i,0], omegas_gfs[k,0], omegas_efs[k,j]])
     #                                omega1              omega2          omega3
                 pathway_omegas.append([omegas_efs[k,j], omegas_ges[j,0], omegas_ges[i,0], omegas_efs[k,i]])
+    
+    
+    # allow for evens through energy transfer... initial rough approach
+    omegas_ges_evens = omegas_ges_full[::2]#,::2]
+    omegas_eeps_evens = omegas_eeps_full[::2,::2] # (even e -> even e) ... use this for possible energy transfer?
+    omegas_efs_evens = omegas_efs_full[1::2,::2] # (even e's -> odd f's)
+    # if plot_mode == 1:  
+        # matrix_plotter(omegas_ges_evens*1e3, alpha_gs[::2],alpha_es[::2],title=r'Energies for evens $\Sigma_{i,j} \omega_{g_ie_j}$',frac=0.99,label_fontsize=18)
+    #     matrix_plotter(omegas_eeps_evens*1e3, alpha_es[::2],alpha_es[::2],title=r'Energies for evens $\Sigma_{i,j} \omega_{e_ie_j}$',frac=0.99,label_fontsize=18)
+        # matrix_plotter(omegas_efs_evens*1e3, alpha_es[::2],alpha_fs[1::2],title=r'Energies for evens->odds $\Sigma_{i,j} \omega_{e_if_j}$',frac=0.99,label_fontsize=18)
 
-                # alphas_123.append([overlap_alphas_ges[i,0], overlap_alphas_gfs[k,0],overlap_alphas_efs[k,j]])
-    #                                   alpha1                     alpha2              alpha3
     pathway_omegas = np.array(pathway_omegas)
+
+    ETarr = np.zeros(len(pathway_omegas))
+    # allow for pathways that undergo energy transfer during t32
+    if ET == 1:
+        pathway_omegas_wET = []
+        pathway_ges_evenStart = []
+        nterms = int(nVib/2)
+        # nterms =10
+        for i in range(nterms):
+            for j in range(nterms):
+                for k in range(nterms):
+                    # omegas123.append([omegas_ges[i,0], omegas_gfs[k,0], omegas_efs[k,j]])
+        #                                omega1              omega2          omega3
+                    pathway_omegas_wET.append([omegas_efs_evens[k,j], omegas_ges[j,0], omegas_ges[i,0], omegas_efs_evens[k,i]])
+                    # pathway_ges_evenStart.append([omegas_efs_evens[k,j],omegas_ges_evens[j], omegas_ges_evens[i], omegas_efs_evens[k,i]])
+                    pathway_ges_evenStart.append([omegas_ges_evens[j], omegas_ges_evens[i]])
+        pathway_ges_evenStart = np.array(pathway_ges_evenStart) # where to start the pathway for the energy transfer ef transition
+        # pathway_omegas = pathway_omegas_wET # testing energy transfer
+        pathway_omegas_wET = np.array(pathway_omegas_wET)
+        pathway_omegas = np.vstack([pathway_omegas,pathway_omegas_wET])
+        ETarr = np.hstack([ETarr, np.ones(len(pathway_omegas_wET))])
     
+        plt.figure(figsize=[30,8])
+        xmax=450
+        # xmax=100
+        xmax = len(pathway_omegas)*13
+        spacing = np.linspace(0,len(pathway_omegas),xmax)
+        plt.hlines(0,0,len(pathway_omegas),'k')
+        plt.title('Pathways for DQC',fontsize=18)
+        for i in range(len(omegas_ges)):
+            plt.hlines(omegas_ges[i],0,xmax,'k',linewidth=2.5,zorder=2)
+            plt.hlines(omegas_ges[i]+omegas_efs[i,i],0,xmax,'k',linewidth=2.5,zorder=2)
+            # plt.hlines(omegas_gfs[i],0,10,'gray','--')
+        for j in range(len(omegas_ges_full)):
+            plt.hlines(omegas_ges_full[j],0,xmax,'gray','--',zorder=-1,linewidth=1)
+            plt.hlines(omegas_gfs_full[j],0,xmax,'gray','--',zorder=-1, linewidth=1)
+        plt.ylim(0,max(omegas_gfs_full)*1.1)
+        plt.xlim(0,max(spacing))
+        arrow_linewidth = 2.5
+        # allow for energy transfer
+        j=0
+        for m in range(len(pathway_omegas)):
+        # for m in range(nterms):
+            j+=1                        # t1, idx2
+            # plt.vlines(spacing[j], 0, pathway_omegas[m,2],'r',linewidth=linewidths)
+            # plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,2]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='r'))
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,2]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='r'))
+            j+=1                                             # t2, idx3
+            # plt.vlines(spacing[j], pathway_omegas[m,2], pathway_omegas[m,3] + pathway_omegas[m,2],'b',linewidth=linewidths)
+            if ETarr[m] == 0: # no ET
+                plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_omegas[m,2]), xytext=(spacing[j],pathway_omegas[m,2]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b')) 
+            elif ETarr[m] == 1: # w ET
+                start_idx = int(m-len(pathway_omegas/2))
+                plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_ges_evenStart[start_idx,1]  ), xytext=(spacing[j],pathway_ges_evenStart[start_idx,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b'))
+            j += 1                      # t3, idx1
+            # plt.vlines(spacing[j], 0, pathway_omegas[m,1],'m',linewidth=linewidths)
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,1]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='m'))
+            j += 1                                          # t4, idx0
+            # plt.vlines(spacing[j], pathway_omegas[m,1], pathway_omegas[m,0] + pathway_omegas[m,1],'c',linewidth=linewidths)
+            if ETarr[m] == 1: # w ET
+                start_idx = int(m-len(pathway_omegas/2))
+                plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_ges_evenStart[start_idx,0]), xytext=(spacing[j],pathway_ges_evenStart[start_idx,0]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
+            elif ETarr[m] == 0: # no ET
+                plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
     
-    plt.figure(figsize=[30,10])
-    xmax=450
-    # xmax=100
-    xmax = len(pathway_omegas)*13
-    spacing = np.linspace(0,len(pathway_omegas),xmax)
-    plt.hlines(0,0,len(pathway_omegas),'k')
-    plt.title('Pathways for DQC',fontsize=18)
-    for i in range(len(omegas_ges)):
-        plt.hlines(omegas_ges[i],0,xmax,'k',linewidth=2.5,zorder=2)
-        plt.hlines(omegas_ges[i]+omegas_efs[i,i],0,xmax,'k',linewidth=2.5,zorder=2)
-        # plt.hlines(omegas_gfs[i],0,10,'gray','--')
-    for j in range(len(omegas_ges_full)):
-        plt.hlines(omegas_ges_full[j],0,xmax,'gray','--',zorder=-1,linewidth=1)
-        plt.hlines(omegas_gfs_full[j],0,xmax,'gray','--',zorder=-1, linewidth=1)
-    plt.ylim(0,max(omegas_gfs_full)*1.1)
-    plt.xlim(0,max(spacing))
-    arrow_linewidth = 2.5
-    j=0
-    for m in range(len(pathway_omegas)):
-    # for m in range(nterms):
-        j+=1                        # t1, idx2
-        # plt.vlines(spacing[j], 0, pathway_omegas[m,2],'r',linewidth=linewidths)
-        # plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,2]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='r'))
-        plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,2]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='r'))
-        j+=1                                             # t2, idx3
-        # plt.vlines(spacing[j], pathway_omegas[m,2], pathway_omegas[m,3] + pathway_omegas[m,2],'b',linewidth=linewidths)
-        plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_omegas[m,2]), xytext=(spacing[j],pathway_omegas[m,2]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b'))
-        j += 1                      # t3, idx1
-        # plt.vlines(spacing[j], 0, pathway_omegas[m,1],'m',linewidth=linewidths)
-        plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,1]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='m'))
-        j += 1                                          # t4, idx0
-        # plt.vlines(spacing[j], pathway_omegas[m,1], pathway_omegas[m,0] + pathway_omegas[m,1],'c',linewidth=linewidths)
-        plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
-        j += 3
-        # plt.vlines(spacing[j], 0, omegas123_dqc[m,0],color='r',linestyle='-',linewidth=linewidths*0.2)
-        plt.annotate(text='', xy=(spacing[j],omegas123_dqc[m,0]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='orange'))    
-        j+=1
-        # plt.vlines(spacing[j], 0, omegas123_dqc[m,1],color='b',linestyle='-',linewidth=linewidths*0.2)
-        plt.annotate(text='', xy=(spacing[j],omegas123_dqc[m,1]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='purple'))    
-        j+=1
-        # plt.vlines(spacing[j], omegas123_dqc[m,0], omegas123_dqc[m,2]+omegas123_dqc[m,0],color='c',linestyle=':')
-        # plt.vlines(spacing[j],  omegas123_dqc[m,1] - omegas123_dqc[m,2],omegas123_dqc[m,1],color='c',linestyle='-',linewidth=linewidths*0.2)
-        plt.annotate(text='', xy=(spacing[j],omegas123_dqc[m,1]), xytext=(spacing[j],omegas123_dqc[m,1] - omegas123_dqc[m,2]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='teal'))    
-        j+=2
-        plt.vlines(spacing[j],-100,35000,'w',linewidth=10)
-        j += 2
+            j += 3
+            # plt.vlines(spacing[j], 0, omegas123_dqc[m,0],color='r',linestyle='-',linewidth=linewidths*0.2)
+            plt.annotate(text='', xy=(spacing[j],omegas123_dqc[m,0]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='orange'))    
+            j+=1
+            # plt.vlines(spacing[j], 0, omegas123_dqc[m,1],color='b',linestyle='-',linewidth=linewidths*0.2)
+            plt.annotate(text='', xy=(spacing[j],omegas123_dqc[m,1]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='purple'))    
+            j+=1
+            # plt.vlines(spacing[j], omegas123_dqc[m,0], omegas123_dqc[m,2]+omegas123_dqc[m,0],color='c',linestyle=':')
+            # plt.vlines(spacing[j],  omegas123_dqc[m,1] - omegas123_dqc[m,2],omegas123_dqc[m,1],color='c',linestyle='-',linewidth=linewidths*0.2)
+            plt.annotate(text='', xy=(spacing[j],omegas123_dqc[m,1]), xytext=(spacing[j],omegas123_dqc[m,1] - omegas123_dqc[m,2]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='teal'))    
+            j+=2
+            plt.vlines(spacing[j],-100,35000,'w',linewidth=10)
+            j += 2
+    elif ET == 0:
+        j=0
+        for m in range(len(pathway_omegas)):
+        # for m in range(nterms):
+            j+=1                        # t1, idx2
+            # plt.vlines(spacing[j], 0, pathway_omegas[m,2],'r',linewidth=linewidths)
+            # plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,2]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='r'))
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,2]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='r'))
+            j+=1                                             # t2, idx3
+            # plt.vlines(spacing[j], pathway_omegas[m,2], pathway_omegas[m,3] + pathway_omegas[m,2],'b',linewidth=linewidths)
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_omegas[m,2]), xytext=(spacing[j],pathway_omegas[m,2]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b'))
+            j += 1                      # t3, idx1
+            # plt.vlines(spacing[j], 0, pathway_omegas[m,1],'m',linewidth=linewidths)
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,1]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='m'))
+            j += 1                                          # t4, idx0
+            # plt.vlines(spacing[j], pathway_omegas[m,1], pathway_omegas[m,0] + pathway_omegas[m,1],'c',linewidth=linewidths)
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
+            j += 3
+            # plt.vlines(spacing[j], 0, omegas123_dqc[m,0],color='r',linestyle='-',linewidth=linewidths*0.2)
+            plt.annotate(text='', xy=(spacing[j],omegas123_dqc[m,0]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='orange'))    
+            j+=1
+            # plt.vlines(spacing[j], 0, omegas123_dqc[m,1],color='b',linestyle='-',linewidth=linewidths*0.2)
+            plt.annotate(text='', xy=(spacing[j],omegas123_dqc[m,1]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='purple'))    
+            j+=1
+            # plt.vlines(spacing[j], omegas123_dqc[m,0], omegas123_dqc[m,2]+omegas123_dqc[m,0],color='c',linestyle=':')
+            # plt.vlines(spacing[j],  omegas123_dqc[m,1] - omegas123_dqc[m,2],omegas123_dqc[m,1],color='c',linestyle='-',linewidth=linewidths*0.2)
+            plt.annotate(text='', xy=(spacing[j],omegas123_dqc[m,1]), xytext=(spacing[j],omegas123_dqc[m,1] - omegas123_dqc[m,2]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='teal'))    
+            j+=2
+            plt.vlines(spacing[j],-100,35000,'w',linewidth=10)
+            j += 2
         # print(j)
     plt.xlim(-0.1,len(pathway_omegas))
     plt.ylim(-1000,33000)
@@ -2689,55 +2830,120 @@ def pathway_plotter(epsilon0, omega0, lam):
     # plt.annotate(text='', xy=(0.5,omegas123_dqc[m,1]), xytext=(0.5,0), arrowprops=dict(arrowstyle='->',linewidth=2, shrinkA=0, shrinkB=0))
     # plt.ylim(0,omegas123_dqc[m,1]*1.1)
     
-        
-    #%
+       #%
+    # #%
     # omegas123_nrprp,
-    plt.figure(figsize=[30,10])
-    xmax = len(pathway_omegas)*13
-    spacing = np.linspace(0,len(pathway_omegas),xmax)
-    plt.hlines(0,0,len(pathway_omegas),'k')
-    plt.title('Pathways for NRP & RP',fontsize=18)
-    for i in range(len(omegas_ges)):
-        plt.hlines(omegas_ges[i],0,xmax,'k',linewidth=2.5,zorder=2)
-        plt.hlines(omegas_ges[i]+omegas_efs[i,i],0,xmax,'k',linewidth=2.5,zorder=2)
-        # plt.hlines(omegas_gfs[i],0,10,'gray','--')
-    for j in range(len(omegas_ges_full)):
-        plt.hlines(omegas_ges_full[j],0,xmax,'gray','--',zorder=-1,linewidth=1)
-        plt.hlines(omegas_gfs_full[j],0,xmax,'gray','--',zorder=-1, linewidth=1)
-    # idx  0  1  2  3
-    # t_i  4  2  1  3
-    # NRP pathways
-    j=0
-    for m in range(len(pathway_omegas)):
-        j+=1                        # t1, idx2
-        # plt.vlines(spacing[j], 0, pathway_omegas[m,2],'r',linewidth=linewidths)
-        plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,2]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='r'))
-        j += 1                      # t2, idx1
-        # plt.vlines(spacing[j], 0, pathway_omegas[m,1],'m',linewidth=linewidths)
-        plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,1]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='m'))
-        j+=1                        # t3, idx3
-        # plt.vlines(spacing[j], pathway_omegas[m,2], pathway_omegas[m,3] + pathway_omegas[m,2],'b',linewidth=linewidths)
-        plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_omegas[m,2]), xytext=(spacing[j],pathway_omegas[m,2]), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b'))
-        j += 1                      # t4, idx0
-        # plt.vlines(spacing[j], pathway_omegas[m,1], pathway_omegas[m,0] + pathway_omegas[m,1],'c',linewidth=linewidths)
-        plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
-        j += 3
-        # plt.vlines(spacing[j], 0, omegas123_nrprp[m,0],color='r',linestyle='-',linewidth=linewidths*0.2)
-        plt.annotate(text='', xy=(spacing[j],omegas123_nrprp[m,0]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='orange'))
-        j+=1
-        # plt.vlines(spacing[j], omegas123_nrprp[m,0], omegas123_nrprp[m,1] + omegas123_nrprp[m,0] ,color='b',linestyle='-',linewidth=linewidths*0.2)
-        plt.annotate(text='', xy=(spacing[j],omegas123_nrprp[m,1] + omegas123_nrprp[m,0]), xytext=(spacing[j],omegas123_nrprp[m,0]), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth*.5, shrinkA=0, shrinkB=0,color='purple'))
-        j+=1
-        # plt.vlines(spacing[j], omegas123_dqc[m,0], omegas123_dqc[m,2]+omegas123_dqc[m,0],color='c',linestyle=':')
-        # plt.vlines(spacing[j],  omegas123_nrprp[m,1] + omegas123_nrprp[m,0],omegas123_nrprp[m,2]+omegas123_nrprp[m,1] + omegas123_nrprp[m,0],color='c',linestyle='-',linewidth=linewidths*0.2)
-        plt.annotate(text='', xy=(spacing[j],omegas123_nrprp[m,2]+omegas123_nrprp[m,1] + omegas123_nrprp[m,0]), xytext=(spacing[j],omegas123_nrprp[m,1] + omegas123_nrprp[m,0]), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='teal'))
-        j += 2
-        plt.vlines(spacing[j],-300,35000,'w',linewidth=10)
-        j += 2
-    plt.xlim(-0.1,len(pathway_omegas))
-    plt.ylim(-1000,33000)
-    plt.xlabel('term number',fontsize=14)
-    plt.ylabel(r'Energy $(cm^{-1})$',fontsize=14)
+    if ET == 1:
+        plt.figure(figsize=[30,8])
+        Nsteps = len(pathway_omegas)*13
+        spacing = np.linspace(0,len(pathway_omegas),Nsteps)
+        xmax = len(pathway_omegas)
+        plt.hlines(0,0,len(pathway_omegas),'k')
+        plt.title('Pathways for NRP & RP',fontsize=18)
+        for i in range(len(omegas_ges)):
+            plt.hlines(omegas_ges[i],0,xmax,'k',linewidth=2.5,zorder=2)
+            plt.hlines(omegas_ges[i]+omegas_efs[i,i],0,xmax,'k',linewidth=2.5,zorder=2)
+            # plt.hlines(omegas_gfs[i],0,10,'gray','--')
+        for j in range(len(omegas_ges_full)):
+            plt.hlines(omegas_ges_full[j],0,xmax,'gray','--',zorder=-1,linewidth=1)
+            plt.hlines(omegas_gfs_full[j],0,xmax,'gray','--',zorder=-1, linewidth=1)
+        # idx  0  1  2  3
+        # t_i  4  2  1  3
+        # NRP pathways
+        j=0
+        for m in range(len(pathway_omegas)):
+            j+=1                        # t1, idx2
+            # plt.vlines(spacing[j], 0, pathway_omegas[m,2],'r',linewidth=linewidths)
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,2]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='r'))
+            j += 1                      # t2, idx1
+            # plt.vlines(spacing[j], 0, pathway_omegas[m,1],'m',linewidth=linewidths)
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,1]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='m'))
+            j+=1                        # t3, idx3
+            # plt.vlines(spacing[j], pathway_omegas[m,2], pathway_omegas[m,3] + pathway_omegas[m,2],'b',linewidth=linewidths)
+            # plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_omegas[m,2]), xytext=(spacing[j],pathway_omegas[m,2]), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b'))
+            if ETarr[m] == 0: # no ET
+                plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_omegas[m,2]), xytext=(spacing[j],pathway_omegas[m,2]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b')) 
+            elif ETarr[m] == 1: # w ET
+                start_idx = int(m-len(pathway_omegas/2))
+                plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_ges_evenStart[start_idx,1]  ), xytext=(spacing[j],pathway_ges_evenStart[start_idx,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b'))
+            
+            j += 1                      # t4, idx0
+            # plt.vlines(spacing[j], pathway_omegas[m,1], pathway_omegas[m,0] + pathway_omegas[m,1],'c',linewidth=linewidths)
+            # plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
+            if ETarr[m] == 1: # w ET
+                start_idx = int(m-len(pathway_omegas/2))
+                plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_ges_evenStart[start_idx,0]), xytext=(spacing[j],pathway_ges_evenStart[start_idx,0]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
+            elif ETarr[m] == 0: # no ET
+                plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
+    
+            j += 3
+            # plt.vlines(spacing[j], 0, omegas123_nrprp[m,0],color='r',linestyle='-',linewidth=linewidths*0.2)
+            plt.annotate(text='', xy=(spacing[j],omegas123_nrprp[m,0]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='orange'))
+            j+=1
+            # plt.vlines(spacing[j], omegas123_nrprp[m,0], omegas123_nrprp[m,1] + omegas123_nrprp[m,0] ,color='b',linestyle='-',linewidth=linewidths*0.2)
+            plt.annotate(text='', xy=(spacing[j],omegas123_nrprp[m,1] + omegas123_nrprp[m,0]), xytext=(spacing[j],omegas123_nrprp[m,0]), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth*.5, shrinkA=0, shrinkB=0,color='purple'))
+            j+=1
+            # plt.vlines(spacing[j], omegas123_dqc[m,0], omegas123_dqc[m,2]+omegas123_dqc[m,0],color='c',linestyle=':')
+            # plt.vlines(spacing[j],  omegas123_nrprp[m,1] + omegas123_nrprp[m,0],omegas123_nrprp[m,2]+omegas123_nrprp[m,1] + omegas123_nrprp[m,0],color='c',linestyle='-',linewidth=linewidths*0.2)
+            if ETarr[m] == 0: # no ET
+                plt.annotate(text='', xy=(spacing[j],omegas123_nrprp[m,2]+omegas123_nrprp[m,1] + omegas123_nrprp[m,0]), xytext=(spacing[j],omegas123_nrprp[m,1] +omegas123_nrprp[m,0]), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='teal'))
+            elif ETarr[m] == 1: # w ET
+                plt.annotate(text='', xy=(spacing[j],omegas123_nrprp[m,2]+omegas123_nrprp[m,1] + pathway_ges_evenStart[start_idx,1]), xytext=(spacing[j],omegas123_nrprp[m,1] +pathway_ges_evenStart[start_idx,1]), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='teal'))
+            j += 2
+            plt.vlines(spacing[j],-300,35000,'w',linewidth=10)
+            j += 2
+        plt.xlim(-0.1,len(pathway_omegas))
+        plt.ylim(-1000,33000)
+        plt.xlabel('term number',fontsize=14)
+        plt.ylabel(r'Energy $(cm^{-1})$',fontsize=14)
+        
+    elif ET == 0:
+        plt.figure(figsize=[30,10])
+        xmax = len(pathway_omegas)*13
+        spacing = np.linspace(0,len(pathway_omegas),xmax)
+        plt.hlines(0,0,len(pathway_omegas),'k')
+        plt.title('Pathways for NRP & RP',fontsize=18)
+        for i in range(len(omegas_ges)):
+            plt.hlines(omegas_ges[i],0,xmax,'k',linewidth=2.5,zorder=2)
+            plt.hlines(omegas_ges[i]+omegas_efs[i,i],0,xmax,'k',linewidth=2.5,zorder=2)
+            # plt.hlines(omegas_gfs[i],0,10,'gray','--')
+        for j in range(len(omegas_ges_full)):
+            plt.hlines(omegas_ges_full[j],0,xmax,'gray','--',zorder=-1,linewidth=1)
+            plt.hlines(omegas_gfs_full[j],0,xmax,'gray','--',zorder=-1, linewidth=1)
+        # idx  0  1  2  3
+        # t_i  4  2  1  3
+        # NRP pathways
+        j=0
+        for m in range(len(pathway_omegas)):
+            j+=1                        # t1, idx2
+            # plt.vlines(spacing[j], 0, pathway_omegas[m,2],'r',linewidth=linewidths)
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,2]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='r'))
+            j += 1                      # t2, idx1
+            # plt.vlines(spacing[j], 0, pathway_omegas[m,1],'m',linewidth=linewidths)
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,1]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='m'))
+            j+=1                        # t3, idx3
+            # plt.vlines(spacing[j], pathway_omegas[m,2], pathway_omegas[m,3] + pathway_omegas[m,2],'b',linewidth=linewidths)
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_omegas[m,2]), xytext=(spacing[j],pathway_omegas[m,2]), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b'))
+            j += 1                      # t4, idx0
+            # plt.vlines(spacing[j], pathway_omegas[m,1], pathway_omegas[m,0] + pathway_omegas[m,1],'c',linewidth=linewidths)
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
+            j += 3
+            # plt.vlines(spacing[j], 0, omegas123_nrprp[m,0],color='r',linestyle='-',linewidth=linewidths*0.2)
+            plt.annotate(text='', xy=(spacing[j],omegas123_nrprp[m,0]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='orange'))
+            j+=1
+            # plt.vlines(spacing[j], omegas123_nrprp[m,0], omegas123_nrprp[m,1] + omegas123_nrprp[m,0] ,color='b',linestyle='-',linewidth=linewidths*0.2)
+            plt.annotate(text='', xy=(spacing[j],omegas123_nrprp[m,1] + omegas123_nrprp[m,0]), xytext=(spacing[j],omegas123_nrprp[m,0]), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth*.5, shrinkA=0, shrinkB=0,color='purple'))
+            j+=1
+            # plt.vlines(spacing[j], omegas123_dqc[m,0], omegas123_dqc[m,2]+omegas123_dqc[m,0],color='c',linestyle=':')
+            # plt.vlines(spacing[j],  omegas123_nrprp[m,1] + omegas123_nrprp[m,0],omegas123_nrprp[m,2]+omegas123_nrprp[m,1] + omegas123_nrprp[m,0],color='c',linestyle='-',linewidth=linewidths*0.2)
+            plt.annotate(text='', xy=(spacing[j],omegas123_nrprp[m,2]+omegas123_nrprp[m,1] + omegas123_nrprp[m,0]), xytext=(spacing[j],omegas123_nrprp[m,1] + omegas123_nrprp[m,0]), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='teal'))
+            j += 2
+            plt.vlines(spacing[j],-300,35000,'w',linewidth=10)
+            j += 2
+        plt.xlim(-0.1,len(pathway_omegas))
+        plt.ylim(-1000,33000)
+        plt.xlabel('term number',fontsize=14)
+        plt.ylabel(r'Energy $(cm^{-1})$',fontsize=14)
 
 pathway_plotter(epsilon0, omega0, lam)
 
