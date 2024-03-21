@@ -3163,7 +3163,7 @@ def pathway_plotter_v2(epsilon0, omega0, lam):
 
     # omegas for all four interactions
 # =============================================================================
-#   no relaxation ETarr = [0,0,0,0]
+#   ETarr = [0,0,0,0] no relaxation
 # =============================================================================
     # omegas123 = []
     pathway_omegas = []
@@ -3179,7 +3179,7 @@ def pathway_plotter_v2(epsilon0, omega0, lam):
     pathway_omegas = np.array(pathway_omegas)
     ETarr = np.zeros(len(pathway_omegas))
     
-    # allow for evens through energy transfer... initial rough approach
+    # allow for evens through energy transfer... 
     omegas_ges_evens = omegas_ges_full[::2]
     omegas_eeps_evens = omegas_eeps_full[::2,::2] # (even e -> even e) ... use this for possible energy transfer?
     omegas_efs_even2odd = omegas_efs_full[1::2,::2] # (even e's -> odd f's)
@@ -3202,7 +3202,7 @@ def pathway_plotter_v2(epsilon0, omega0, lam):
 
     if ET == 1:
 # =============================================================================
-#       ETarr = 1 -> ETarr_eeRel = [1,0,1,0]
+#       ETarr_eeRel = [1,0,1,0] both e-states relax (used to be ETarr == 1)
 # =============================================================================
         # allow for relaxation of the e-states: 
         pathway_omegas_wET = []
@@ -3219,39 +3219,31 @@ def pathway_plotter_v2(epsilon0, omega0, lam):
         pathway_ges_evenStart = np.array(pathway_ges_evenStart) # where to start the pathway for the energy transfer ef transition
         # pathway_omegas = pathway_omegas_wET # testing energy transfer
         pathway_omegas_wET = np.array(pathway_omegas_wET)
-        nET_1terms = len(pathway_omegas_wET)
+        nET_eeRel_terms = len(pathway_omegas_wET)
         
+       
 # =============================================================================
-#       ETarr = 2 -> ETarr_feRel = [0,2,1,0]
+#        ETarr_feRel = [0,2,1,0]  first f-state and second e-state (used to be ETarr == 2)
 # =============================================================================
         # allow for relaxation of f-states: 
-        pathway_omegas_wET_f = []
-        pathway_ef_noRel_f = []
-        pathway_ges_evenStart_f = []
+        pathway_omegas_wET_feRel = []
+        pathway_ef_noRel_feRel = []
+        pathway_ges_evenStart_feRel = []
         nterms = int(nVib/2)
         for i in range(nterms):
             for j in range(nterms):
                 for k in range(nterms-1):
-                # for k in range(1,nterms):
-                    # omegas123.append([omegas_ges[i,0], omegas_gfs[k,0], omegas_efs[k,j]])
-        #                                omega1              omega2          omega3
-                    # pathway_omegas_wET_f.append([omegas_efs_odd2odd[k,j], omegas_ges[j,0], omegas_ges[i,0], omegas_efs_odd2odd[k,i]])
-                    # pathway_ef_noRel_f.append([omegas_efs[k+1,j], omegas_efs[k+1,i]])
-                    pathway_omegas_wET_f.append([omegas_efs_even2odd[k,j], omegas_ges[j,0], omegas_ges[i,0], omegas_efs[k+1,i]])
-                    pathway_ef_noRel_f.append([omegas_efs_odd2odd[k,j], omegas_efs_odd2odd[k,i]])
-                    pathway_ges_evenStart_f.append([omegas_ges_evens[j], omegas_ges_evens[i]])
-                    # pathway_omegas_wET_f.append([omegas_efs[k,j], omegas_ges[j,0], omegas_ges[i,0], omegas_efs_odd2odd[k,i]])
-                    # pathway_ef_noRel_f.append([omegas_efs[k,j], omegas_efs[k,i]])
-        # pathway_ges_evenStart = np.array(pathway_ges_evenStart) # where to start the pathway for the energy transfer ef transition
-        # pathway_omegas = pathway_omegas_wET # testing energy transfer
-        pathway_omegas_wET_f = np.array(pathway_omegas_wET_f)
-        pathway_ef_noRel_f = np.array(pathway_ef_noRel_f) 
-        pathway_ges_evenStart_f = np.array(pathway_ges_evenStart_f)
-        nET_2terms = len(pathway_omegas_wET_f)
+                    pathway_omegas_wET_feRel.append([omegas_efs_even2odd[k,j], omegas_ges[j,0], omegas_ges[i,0], omegas_efs[k+1,i]])
+                    pathway_ef_noRel_feRel.append([omegas_efs_odd2odd[k,j], omegas_efs_odd2odd[k,i]])
+                    pathway_ges_evenStart_feRel.append([omegas_ges_evens[j], omegas_ges_evens[i]])
+        pathway_omegas_wET_feRel = np.array(pathway_omegas_wET_feRel)
+        pathway_ef_noRel_feRel = np.array(pathway_ef_noRel_feRel) 
+        pathway_ges_evenStart_feRel = np.array(pathway_ges_evenStart_feRel)
+        nET_feRel_terms = len(pathway_omegas_wET_feRel)
         
-# =============================================================================
-#         ETarr = 3 -> ETarr_efRel = [1,0,0,2]
-# =============================================================================
+ # =============================================================================
+ #      ETarr_efRel = [1,0,0,2], first e-state and second f-state
+ # =============================================================================
         # allow for relaxation of f-states: 
         pathway_omegas_wET_efRel = []
         pathway_ef_noRel_efRel = []
@@ -3265,7 +3257,7 @@ def pathway_plotter_v2(epsilon0, omega0, lam):
         #                                omega1              omega2          omega3
                     # pathway_omegas_wET_f.append([omegas_efs_odd2odd[k,j], omegas_ges[j,0], omegas_ges[i,0], omegas_efs_odd2odd[k,i]])
                     # pathway_ef_noRel_f.append([omegas_efs[k+1,j], omegas_efs[k+1,i]])
-                    pathway_omegas_wET_efRel.append([omegas_efs[k,j], omegas_ges[j,0], omegas_ges[i,0], omegas_efs_even2odd[k+1,i]])
+                    pathway_omegas_wET_efRel.append([omegas_efs[k+1,j], omegas_ges[j,0], omegas_ges[i,0], omegas_efs_even2odd[k,i]])
                     pathway_ef_noRel_efRel.append([omegas_efs_odd2odd[k,j], omegas_efs_odd2odd[k,i]])
                     pathway_ges_evenStart_efRel.append([omegas_ges_evens[j], omegas_ges_evens[i]])
                     # pathway_omegas_wET_f.append([omegas_efs[k,j], omegas_ges[j,0], omegas_ges[i,0], omegas_efs_odd2odd[k,i]])
@@ -3278,15 +3270,21 @@ def pathway_plotter_v2(epsilon0, omega0, lam):
         nET_efRel_terms = len(pathway_omegas_wET_efRel)
         
         
-        ETarr = np.hstack([np.zeros(len(pathway_omegas_wET)), np.ones(len(pathway_omegas_wET)),2*np.ones(len(pathway_omegas_wET_f))])
+        
+        # ETarr = np.hstack([np.zeros(len(pathway_omegas_wET)), np.ones(len(pathway_omegas_wET)),2*np.ones(len(pathway_omegas_wET_f))])
         # changing ETarr to be a Nx4 where the four columns each represent whether relaxation occurred
+                            # no relaxation
         ETarr_noRel = np.array([[0,0,0,0]*len(np.array(pathway_omegas))]).reshape(len(np.array(pathway_omegas)),4)
+                            # both e-states relax
         ETarr_eeRel = np.array([[1,0,1,0]*len(pathway_omegas_wET)]).reshape(len(pathway_omegas_wET),4)
-        ETarr_feRel = np.array([[0,2,1,0]*len(pathway_omegas_wET_f)]).reshape(len(pathway_omegas_wET_f),4)
-        ETarr_efRel = np.array([[1,0,0,2]*len(pathway_omegas_wET_f)]).reshape(len(pathway_omegas_wET_f),4)
+                    # the first f state and second e state relax
+        ETarr_feRel = np.array([[0,2,1,0]*len(pathway_omegas_wET_feRel)]).reshape(len(pathway_omegas_wET_feRel),4)
+                    # the first e-state and second f-state relax
+        ETarr_efRel = np.array([[1,0,0,2]*len(pathway_omegas_wET_efRel)]).reshape(len(pathway_omegas_wET_efRel),4)
+        # I don't think that [0,2,0,2] will contribute since we aren't allowing the energy that the system relaxes to to be coherent
         ETarr = np.vstack([ETarr_noRel,ETarr_eeRel,ETarr_feRel,ETarr_efRel])
 
-        pathway_omegas = np.vstack([pathway_omegas, pathway_omegas_wET, pathway_omegas_wET_f])
+        pathway_omegas = np.vstack([pathway_omegas, pathway_omegas_wET, pathway_omegas_wET_feRel,pathway_omegas_wET_efRel])
 
 
 
@@ -3298,7 +3296,7 @@ def pathway_plotter_v2(epsilon0, omega0, lam):
     arrow_linewidth = 2.5
     # DQC
     # allow for energy transfer
-    fig,ax = plt.subplots(figsize=[30,10])
+    fig,ax = plt.subplots(figsize=[50,10])
     Nsteps = len(pathway_omegas)*13
     spacing = np.linspace(0,len(pathway_omegas),Nsteps)
     xmax = len(pathway_omegas)
@@ -3318,36 +3316,51 @@ def pathway_plotter_v2(epsilon0, omega0, lam):
         # print(m)
         j+=1                        # t1, idx2
         plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,2]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->', linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='r'))
-        j+=1                                             # t2, idx3
+        j+=1                
+                                   # t2, idx3
         if np.product(ETarr[m] == [0,0,0,0]):#ETarr[m] == 0: # no ET
             plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_omegas[m,2]), xytext=(spacing[j],pathway_omegas[m,2]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b')) 
         elif np.product(ETarr[m] == [1,0,1,0]): #ETarr[m] == 1: # w ET
-            start_idx = m%nET_1terms #8 #int(m-len(pathway_omegas/3))
+            start_idx = m%nET_eeRel_terms #8 #int(m-len(pathway_omegas/3))
             plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_ges_evenStart[start_idx,1]  ), xytext=(spacing[j],pathway_ges_evenStart[start_idx,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b'))
             ax.add_patch(curly_arrow((spacing[j-1], pathway_omegas[m,2]), (spacing[j],pathway_ges_evenStart[start_idx,1]), n=5, arr_size=0.01,linew=1,width=0.05,col='r'))
         elif np.product(ETarr[m] == [0,2,1,0]): #ETarr[m] == 2:
-            start_idx = m%nET_2terms
+            start_idx = m%nET_feRel_terms
             plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_omegas[m,2] ), xytext=(spacing[j],pathway_omegas[m,2]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b'))
             # ax.add_patch(curly_arrow((spacing[j], pathway_ef_noRel_f[m%8,1]+pathway_omegas[m,2]), (spacing[j], pathway_omegas[m,3] + pathway_omegas[m,2]), n=5, arr_size=0.01,linew=1,width=0.05,col='m')) 
-            ax.add_patch(curly_arrow((spacing[j], pathway_omegas[m,3] + pathway_omegas[m,2]), (spacing[j+1], pathway_ef_noRel_f[start_idx,1]+pathway_omegas[m,2]), n=5, arr_size=0.01,linew=1,width=0.05,col='b')) 
+            ax.add_patch(curly_arrow((spacing[j], pathway_omegas[m,3] + pathway_omegas[m,2]), (spacing[j+1], pathway_ef_noRel_feRel[start_idx,1]+pathway_omegas[m,2]), n=5, arr_size=0.01,linew=1,width=0.05,col='b')) 
+        elif np.product(ETarr[m] == [1,0,0,2]): #ETarr[m] == 2:
+            start_idx = m%nET_efRel_terms
+            # plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_ges_evenStart_efRel[start_idx,1]), xytext=(spacing[j],pathway_ges_evenStart_efRel[start_idx,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b'))
+            # ax.add_patch(curly_arrow((spacing[j], pathway_ef_noRel_f[start_idx,0]+pathway_omegas[m,1]), (spacing[j], pathway_omegas[m,0] + pathway_omegas[m,1]), n=5, arr_size=0.01,linew=1,width=0.05,col='c')) 
+            ax.add_patch(curly_arrow((spacing[j-1], pathway_omegas[m,2]), (spacing[j], pathway_ges_evenStart_efRel[start_idx,1]), n=5, arr_size=0.01,linew=1,width=0.05,col='r')) 
             
         j += 1                      # t3, idx1
         plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,1]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='m'))
-        j += 1                                          # t4, idx0
+        j += 1  
+                                    # t4, idx0
         # plt.vlines(spacing[j], pathway_omegas[m,1], pathway_omegas[m,0] + pathway_omegas[m,1],'c',linewidth=linewidths)
         if np.product(ETarr[m] == [0,0,0,0]): #ETarr[m] == 0: # no ET
             plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
         elif np.product(ETarr[m] == [1,0,1,0]): #ETarr[m] == 1: # w ET
-            start_idx = m%nET_1terms #8 #int(m-len(pathway_omegas/3))
+            start_idx = m%nET_eeRel_terms #8 #int(m-len(pathway_omegas/3))
             # print(start_idx)
             plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_ges_evenStart[start_idx,0]), xytext=(spacing[j],pathway_ges_evenStart[start_idx,0]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
             ax.add_patch(curly_arrow((spacing[j-1], pathway_omegas[m,1]), (spacing[j], pathway_ges_evenStart[start_idx,0]), n=5, arr_size=0.01,linew=1,width=0.05,col='m')) 
         elif np.product(ETarr[m] == [0,2,1,0]): #ETarr[m] == 2:
-            start_idx = m%nET_2terms
+            start_idx = m%nET_feRel_terms
             # plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
-            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_ges_evenStart_f[start_idx,0]), xytext=(spacing[j],pathway_ges_evenStart_f[start_idx,0]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_ges_evenStart_feRel[start_idx,0]), xytext=(spacing[j],pathway_ges_evenStart_feRel[start_idx,0]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
             # ax.add_patch(curly_arrow((spacing[j], pathway_ef_noRel_f[start_idx,0]+pathway_omegas[m,1]), (spacing[j], pathway_omegas[m,0] + pathway_omegas[m,1]), n=5, arr_size=0.01,linew=1,width=0.05,col='c')) 
-            ax.add_patch(curly_arrow((spacing[j-1], pathway_omegas[m,1]), (spacing[j], pathway_ges_evenStart_f[start_idx,0]), n=5, arr_size=0.01,linew=1,width=0.05,col='m')) 
+            ax.add_patch(curly_arrow((spacing[j-1], pathway_omegas[m,1]), (spacing[j], pathway_ges_evenStart_feRel[start_idx,0]), n=5, arr_size=0.01,linew=1,width=0.05,col='m')) 
+        elif np.product(ETarr[m] == [1,0,0,2]): #ETarr[m] == 2:
+            start_idx = m%nET_efRel_terms
+            # plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j], pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
+            # ax.add_patch(curly_arrow((spacing[j], pathway_ef_noRel_f[start_idx,0]+pathway_omegas[m,1]), (spacing[j], pathway_omegas[m,0] + pathway_omegas[m,1]), n=5, arr_size=0.01,linew=1,width=0.05,col='c')) 
+            # ax.add_patch(curly_arrow((spacing[j+2], pathway_ges_evenStart_feRel[start_idx,0]+pathway_ef_noRel_efRel[start_idx,0]), (spacing[j], pathway_omegas[m,0] + pathway_omegas[m,1]), n=5, arr_size=0.01,linew=1,width=0.05,col='c')) 
+            ax.add_patch(curly_arrow((spacing[j], pathway_omegas[m,0] + pathway_omegas[m,1]), (spacing[j+2], pathway_ef_noRel_feRel[start_idx,0]+pathway_omegas[m,1]), n=5, arr_size=0.01,linew=1,width=0.05,col='c')) 
 
         j += 3
         # plt.annotate(text='', xy=(spacing[j],omegas123_dqc[m,0]), xytext=(spacing[j],0), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth*0.5, shrinkA=0, shrinkB=0,color='orange'))    
@@ -3366,7 +3379,7 @@ def pathway_plotter_v2(epsilon0, omega0, lam):
      #%%
     # NRP & RP
     # plt.figure(figsize=[30,8])
-    fig,ax = plt.subplots(figsize=[30,10])
+    fig,ax = plt.subplots(figsize=[50,10])
     Nsteps = len(pathway_omegas)*13
     spacing = np.linspace(0,len(pathway_omegas),Nsteps)
     xmax = len(pathway_omegas)
@@ -3392,27 +3405,40 @@ def pathway_plotter_v2(epsilon0, omega0, lam):
         if np.product(ETarr[m] == [0,0,0,0]): #ETarr[m] == 0: # no ET
             ax.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_omegas[m,2]), xytext=(spacing[j],pathway_omegas[m,2]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b')) 
         elif np.product(ETarr[m] == [1,0,1,0]): #ETarr[m] == 1: # w ET
-            start_idx = m%nET_1terms #int(m-len(pathway_omegas/2))
+            start_idx = m%nET_eeRel_terms #int(m-len(pathway_omegas/2))
             ax.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_ges_evenStart[start_idx,1]  ), xytext=(spacing[j],pathway_ges_evenStart[start_idx,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b'))
             ax.add_patch(curly_arrow((spacing[j-2], pathway_omegas[m,2]), (spacing[j],pathway_ges_evenStart[start_idx,1]), n=5, arr_size=0.01,linew=1,width=0.05,col='r'))
         elif np.product(ETarr[m] == [0,2,1,0]): #ETarr[m] == 2:
-            start_idx = m%nET_2terms
+            start_idx = m%nET_feRel_terms
             plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,2] + pathway_omegas[m,3]), xytext=(spacing[j],pathway_omegas[m,2]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b'))
-            ax.add_patch(curly_arrow((spacing[j], pathway_ef_noRel_f[start_idx,1]+pathway_omegas[m,2]), (spacing[j], pathway_omegas[m,2] + pathway_omegas[m,3]), n=5, arr_size=0.01,linew=1,width=0.05,col='b')) 
-
+            ax.add_patch(curly_arrow((spacing[j+1], pathway_ef_noRel_feRel[start_idx,1]+pathway_omegas[m,2]), (spacing[j], pathway_omegas[m,2] + pathway_omegas[m,3]), n=5, arr_size=0.01,linew=1,width=0.05,col='b')) 
+        elif np.product(ETarr[m] == [1,0,0,2]): #ETarr[m] == 2:
+            start_idx = m%nET_efRel_terms
+            # plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,3] + pathway_ges_evenStart_efRel[start_idx,1]), xytext=(spacing[j],pathway_ges_evenStart_efRel[start_idx,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='b'))
+            # ax.add_patch(curly_arrow((spacing[j], pathway_ef_noRel_f[start_idx,0]+pathway_omegas[m,1]), (spacing[j], pathway_omegas[m,0] + pathway_omegas[m,1]), n=5, arr_size=0.01,linew=1,width=0.05,col='c')) 
+            ax.add_patch(curly_arrow((spacing[j-2], pathway_omegas[m,2]), (spacing[j], pathway_ges_evenStart_efRel[start_idx,1]), n=5, arr_size=0.01,linew=1,width=0.05,col='r')) 
+            
         j += 1                      # t4, idx0
         if np.product(ETarr[m] == [0,0,0,0]):#ETarr[m] == 0: # no ET
             ax.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
         elif np.product(ETarr[m] == [1,0,1,0]):#ETarr[m] == 1: # w ET
-            start_idx = m%nET_1terms#int(m-len(pathway_omegas/2))
+            start_idx = m%nET_eeRel_terms#int(m-len(pathway_omegas/2))
             ax.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_ges_evenStart[start_idx,0]), xytext=(spacing[j],pathway_ges_evenStart[start_idx,0]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
             ax.add_patch(curly_arrow((spacing[j-2], pathway_omegas[m,1]), (spacing[j],pathway_ges_evenStart[start_idx,0]), n=5, arr_size=0.01,linew=1,width=0.05,col='m'))
         elif np.product(ETarr[m] == [0,2,1,0]): #ETarr[m] == 2:
-            start_idx = m%nET_2terms
+            start_idx = m%nET_feRel_terms
             # plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
-            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_ges_evenStart_f[start_idx,0]), xytext=(spacing[j],pathway_ges_evenStart_f[start_idx,0]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_ges_evenStart_feRel[start_idx,0]), xytext=(spacing[j],pathway_ges_evenStart_feRel[start_idx,0]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
             # ax.add_patch(curly_arrow((spacing[j], pathway_ef_noRel_f[start_idx,1]+pathway_omegas[m,2]), (spacing[j], pathway_omegas[m,2] + pathway_omegas[m,3]), n=5, arr_size=0.01,linew=1,width=0.05,col='c')) 
-            ax.add_patch(curly_arrow((spacing[j-2], pathway_omegas[m,1]), (spacing[j], pathway_ges_evenStart_f[start_idx,0]), n=5, arr_size=0.01,linew=1,width=0.05,col='m')) 
+            ax.add_patch(curly_arrow((spacing[j-2], pathway_omegas[m,1]), (spacing[j], pathway_ges_evenStart_feRel[start_idx,0]), n=5, arr_size=0.01,linew=1,width=0.05,col='m')) 
+        elif np.product(ETarr[m] == [1,0,0,2]): #ETarr[m] == 2:
+            start_idx = m%nET_efRel_terms
+            # plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j],pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
+            plt.annotate(text='', xy=(spacing[j],pathway_omegas[m,0] + pathway_omegas[m,1]), xytext=(spacing[j], pathway_omegas[m,1]), arrowprops=dict(arrowstyle='->',linewidth=arrow_linewidth, shrinkA=0, shrinkB=0,color='c'))
+            # ax.add_patch(curly_arrow((spacing[j], pathway_ef_noRel_f[start_idx,0]+pathway_omegas[m,1]), (spacing[j], pathway_omegas[m,0] + pathway_omegas[m,1]), n=5, arr_size=0.01,linew=1,width=0.05,col='c')) 
+            # ax.add_patch(curly_arrow((spacing[j+2], pathway_ges_evenStart_feRel[start_idx,0]+pathway_ef_noRel_efRel[start_idx,0]), (spacing[j], pathway_omegas[m,0] + pathway_omegas[m,1]), n=5, arr_size=0.01,linew=1,width=0.05,col='c')) 
+            ax.add_patch(curly_arrow((spacing[j], pathway_omegas[m,0] + pathway_omegas[m,1]), (spacing[j+2], pathway_ef_noRel_feRel[start_idx,0]+pathway_omegas[m,1]), n=5, arr_size=0.01,linew=1,width=0.05,col='c')) 
 
     #%
         j += 3
